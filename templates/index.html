@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StudyStreak</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #f0f2f5;
+            -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Outfit', sans-serif;
+        }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .header-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header-content {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .main-content {
+            padding-top: 4rem;
+        }
+        .streak-badge {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            padding: 4px 8px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(255, 107, 107, 0.1), 0 2px 4px -1px rgba(255, 107, 107, 0.06);
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .level-badge {
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            padding: 4px 8px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .stars-badge {
+            background: linear-gradient(135deg, #F59E0B, #FCD34D);
+            padding: 4px 8px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .exp-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .exp-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+            transition: width 0.3s ease;
+        }
+        .stats-container {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #4338CA, #4F46E5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2), 0 4px 6px -2px rgba(79, 70, 229, 0.1);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #9CA3AF, #D1D5DB);
+        }
+        .input-field {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            border-color: #4f46e5;
+            outline: none;
+        }
+        .upload-container {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px dashed #E5E7EB;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .upload-container:hover {
+            border-color: #4F46E5;
+            background: linear-gradient(145deg, #ffffff, #f3f4f6);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .upload-container:active {
+            transform: translateY(0);
+        }
+        .file-icon {
+            font-size: 48px;
+            color: #4f46e5;
+            margin-bottom: 16px;
+        }
+        .badge-button {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .badge-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .badge-button:active {
+            transform: translateY(0) scale(0.95);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+        .modal-content {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            max-width: 90%;
+            width: 480px;
+            margin: 2rem auto;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-content:hover {
+            transform: translateY(-2px);
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .shop-item {
+            border: 2px solid #E5E7EB;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .shop-item:hover {
+            border-color: #4F46E5;
+            background: linear-gradient(145deg, #ffffff, #f3f4f6);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        /* Add dark mode styles */
+        .dark-theme {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .dark-theme .app-container {
+            background: #1c1c1e;
+        }
+        .dark-theme .header-container {
+            background: #1c1c1e;
+            border-bottom: 1px solid #2c2c2e;
+        }
+        .dark-theme .modal-content {
+            background: #1c1c1e;
+            color: #ffffff;
+        }
+        .dark-theme .shop-item {
+            background: #2c2c2e;
+            border-color: #3c3c3e;
+        }
+        .dark-theme .shop-item:hover {
+            background: #3c3c3e;
+            border-color: #4c4c4e;
+        }
+        .dark-theme .input-field {
+            background: #2c2c2e;
+            border-color: #3c3c3e;
+            color: #ffffff;
+        }
+        .dark-theme .bg-white {
+            background-color: #1c1c1e;
+        }
+        .dark-theme .text-gray-900 {
+            color: #ffffff;
+        }
+        .dark-theme .text-gray-600 {
+            color: #a0a0a0;
+        }
+        .dark-theme .text-gray-500 {
+            color: #808080;
+        }
+        .dark-theme .bg-gray-50 {
+            background-color: #2c2c2e;
+        }
+        .dark-theme .hover\:bg-gray-50:hover {
+            background-color: #3c3c3e;
+        }
+        .dark-theme .upload-container {
+            background: #2c2c2e;
+            border-color: #3c3c3e;
+        }
+        .dark-theme .upload-container:hover {
+            background: #3c3c3e;
+            border-color: #4c4c4e;
+        }
+        /* Add quiz container styles */
+        #quizContainer {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .dark-theme #quizContainer {
+            background: #1c1c1e;
+            color: #ffffff;
+        }
+
+        .form-radio {
+            color: #8b5cf6;
+        }
+
+        .dark-theme .form-radio {
+            color: #a78bfa;
+        }
+
+        .form-radio:checked {
+            background-color: currentColor;
+        }
+
+        .dark-theme .form-radio:checked {
+            background-color: currentColor;
+        }
+
+        /* Add transition for showing/hiding quiz */
+        #quizContainer {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #quizContainer.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #quizContainer:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header-container">
+            <div class="header-content">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-lg font-bold text-gray-900">StudyStreak</h1>
+                    <div class="flex items-center gap-4">
+                        <button onclick="showSettingsModal()" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+                        <div class="stats-container">
+                            <span class="level-badge text-white text-sm font-semibold badge-button" onclick="showLevelModal()">
+                                🏆 <span id="userLevel" class="text-sm">Novice</span>
+                            </span>
+                            <span class="stars-badge text-white text-sm font-semibold badge-button" onclick="showShopModal()">
+                                ⭐ <span id="userStars">0</span>
+                            </span>
+                            <span class="streak-badge text-white text-sm font-semibold badge-button" onclick="celebrateStreak()">
+                                🔥 <span id="streakCount">0</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Level Progress Modal -->
+        <div id="levelModal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Your Learning Journey</h3>
+                    <button onclick="hideLevelModal()" class="text-gray-500">✕</button>
+                </div>
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <div class="inline-block relative">
+                            <svg class="progress-ring" width="120" height="120">
+                                <circle class="progress-ring-circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                                <circle id="levelProgress" class="progress-ring-circle" stroke="#7c3aed" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="326.7256359733385" stroke-dashoffset="326.7256359733385"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div id="currentLevel" class="text-2xl font-bold text-purple-600">1</div>
+                                    <div class="text-sm text-gray-500">Level</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Statistics</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-sm text-gray-500">Hours Studied</div>
+                                <div id="hoursStudied" class="text-xl font-semibold">0</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-sm text-gray-500">Quizzes Completed</div>
+                                <div id="quizzesCompleted" class="text-xl font-semibold">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Next Level</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span id="nextLevelTitle" class="font-medium">Knowledge Seeker</span>
+                                <span class="text-sm text-gray-500">Level 2</span>
+                            </div>
+                            <div class="text-sm text-gray-500 mb-2">Requirements:</div>
+                            <ul class="text-sm space-y-1">
+                                <li>• 5 hours of study time</li>
+                                <li>• Complete 3 quizzes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Star Shop Modal -->
+        <div id="shopModal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Star Shop</h3>
+                    <button onclick="hideShopModal()" class="text-gray-500">✕</button>
+                </div>
+                <div class="mb-4">
+                    <div class="bg-yellow-50 p-3 rounded-lg flex justify-between items-center">
+                        <span class="font-medium">Your Stars</span>
+                        <span class="text-xl font-bold">⭐ <span id="shopStars">0</span></span>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <!-- Study Tools -->
+                    <div>
+                        <h4 class="font-semibold mb-3 text-gray-700">Study Tools</h4>
+                        <div class="space-y-3">
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Quiz Hint Pack</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 30</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Get 3 hints to use during your quizzes</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="hintCount">You have: 0 hints</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('hints')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Answer Review</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 50</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Review your quiz answers with detailed explanations</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="reviewCount">You have: 0 reviews</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('review')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Streak Protection -->
+                    <div>
+                        <h4 class="font-semibold mb-3 text-gray-700">Streak Protection</h4>
+                        <div class="space-y-3">
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Streak Shield</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 100</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Protect your streak for one day if you miss a quiz</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="shieldCount">You have: 0 shields</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('shield')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Streak Freeze</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 200</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Freeze your streak for up to 3 days</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="freezeCount">You have: 0 freezes</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('freeze')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customization -->
+                    <div>
+                        <h4 class="font-semibold mb-3 text-gray-700">Customization</h4>
+                        <div class="space-y-3">
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Custom Themes</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 75</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Unlock dark mode and other color themes</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="themeStatus">Status: Not Unlocked</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('themes')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Profile Badges</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 150</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Unlock special achievement badges for your profile</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="badgeCount">Unlocked: 0/10</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('badges')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Power-ups -->
+                    <div>
+                        <h4 class="font-semibold mb-3 text-gray-700">Power-ups</h4>
+                        <div class="space-y-3">
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Double Stars</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 300</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Earn double stars for 24 hours</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="doubleStatus">Status: Not Active</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('double')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                            <div class="shop-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">XP Boost</span>
+                                    <span class="text-purple-600 font-semibold">⭐ 250</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Get 50% more XP for 24 hours</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400" id="xpBoostStatus">Status: Not Active</span>
+                                    <button class="btn-primary px-4" onclick="purchaseItem('xpBoost')" disabled>Purchase</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div id="welcomeSection" class="px-4 py-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Learn Smarter</h2>
+                <div class="max-w-md mx-auto">
+                    <div class="border-2 border-dashed border-purple-400 rounded-2xl p-8 mb-4 text-center bg-white cursor-pointer upload-container" onclick="document.getElementById('mainFileInput').click()">
+                        <div class="mb-4">
+                            <svg class="w-12 h-12 mx-auto text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Your Study Material</h3>
+                        <p class="text-sm text-gray-600 mb-4">Our AI will analyze your content and create personalized quizzes</p>
+                        <p class="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
+                        <p class="text-xs text-gray-500">TXT, PDF, or DOCX files</p>
+                        <input type="file" id="mainFileInput" class="hidden" accept=".txt,.pdf,.docx" multiple onchange="handleMainFileSelect(event)">
+                    </div>
+                    <div id="uploadedFiles" class="mb-4 space-y-2">
+                        <!-- Uploaded files will appear here -->
+                    </div>
+                    <button onclick="generateQuiz()" class="btn-primary w-full bg-purple-600 hover:bg-purple-700 opacity-50 cursor-not-allowed" id="generateQuizBtn" disabled>
+                        Generate Quiz
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Container -->
+            <div id="quizContainer" class="px-4 py-8 max-w-md mx-auto space-y-6 hidden">
+                <div id="quizContent" class="space-y-6">
+                    <!-- Quiz content will be inserted here -->
+                </div>
+                <button onclick="submitQuiz()" class="btn-primary w-full">
+                    Submit Quiz
+                </button>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content max-w-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold">Settings</h3>
+                    <button onclick="hideSettingsModal()" class="text-gray-500">✕</button>
+                </div>
+                <div class="space-y-6">
+                    <!-- Theme Toggle -->
+                    <div>
+                        <h4 class="font-medium mb-3">Theme</h4>
+                        <button id="themeToggle" class="flex items-center justify-between w-full p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors" onclick="toggleTheme()">
+                            <span id="themeLabel">Light Mode</span>
+                            <span id="themeIcon">🌞</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+
+        // Make the upload container clickable and handle drag-drop
+        const mainUploadContainer = document.querySelector('.upload-container');
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            mainUploadContainer.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            mainUploadContainer.addEventListener(eventName, () => {
+                mainUploadContainer.style.borderColor = '#7c3aed';
+                mainUploadContainer.style.backgroundColor = '#f5f3ff';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            mainUploadContainer.addEventListener(eventName, () => {
+                mainUploadContainer.style.borderColor = '#e5e7eb';
+                mainUploadContainer.style.backgroundColor = '#ffffff';
+            });
+        });
+
+        mainUploadContainer.addEventListener('drop', handleMainDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleMainDrop(e) {
+            const dt = e.dataTransfer;
+            const files = Array.from(dt.files).filter(file => 
+                file.name.endsWith('.txt') || 
+                file.name.endsWith('.pdf') || 
+                file.name.endsWith('.docx')
+            );
+            
+            if (files.length > 0) {
+                handleMainFileSelect({ target: { files: dt.files } });
+            }
+        }
+
+        async function loadUploadedFiles() {
+            try {
+                const response = await fetch('/api/files');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch files');
+                }
+                const data = await response.json();
+                updateFileList(data.files);
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        function updateFileList(files) {
+            const fileList = document.getElementById('uploadedFiles');
+            if (files.length === 0) {
+                fileList.innerHTML = '<p class="text-gray-500 text-center">No files uploaded yet</p>';
+                document.getElementById('generateQuizBtn').disabled = true;
+                document.getElementById('generateQuizBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            fileList.innerHTML = files.map(file => `
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">📄</span>
+                        <div>
+                            <p class="font-medium text-gray-900">${file.filename}</p>
+                            <p class="text-sm text-gray-500">${new Date(file.created_at).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${file.id})" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+
+            document.getElementById('generateQuizBtn').disabled = false;
+            document.getElementById('generateQuizBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        async function removeFile(fileId) {
+            try {
+                const response = await fetch(`/api/files/${fileId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete file');
+                }
+
+                await loadUploadedFiles();
+            } catch (error) {
+                console.error('Error removing file:', error);
+                alert('Failed to remove file. Please try again.');
+            }
+        }
+
+        async function handleMainFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                try {
+                    // Show loading state
+                    const generateQuizBtn = document.getElementById('generateQuizBtn');
+                    generateQuizBtn.disabled = true;
+                    generateQuizBtn.textContent = 'Uploading...';
+                    
+                    const formData = new FormData();
+                    for (let file of files) {
+                        if (!file.name.match(/\.(txt|pdf|docx)$/i)) {
+                            throw new Error(`Invalid file type: ${file.name}. Only TXT, PDF, and DOCX files are allowed.`);
+                        }
+                        formData.append('file', file);
+                    }
+                    
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const responseData = await uploadResponse.json();
+                    
+                    if (!uploadResponse.ok) {
+                        throw new Error(responseData.error || 'Upload failed');
+                    }
+                    
+                    // Refresh the file list
+                    await loadUploadedFiles();
+                    
+                    // Reset file input
+                    event.target.value = '';
+                    
+                    // Show success message
+                    alert('Files uploaded successfully! Click "Generate Quiz" to create a quiz.');
+                } catch (error) {
+                    console.error('Error uploading files:', error);
+                    alert(error.message || 'Failed to upload files. Please try again.');
+                    
+                    // Reset button state
+                    const generateQuizBtn = document.getElementById('generateQuizBtn');
+                    generateQuizBtn.disabled = true;
+                    generateQuizBtn.textContent = 'Generate Quiz';
+                    generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        async function generateQuiz() {
+            try {
+                const generateQuizBtn = document.getElementById('generateQuizBtn');
+                generateQuizBtn.disabled = true;
+                generateQuizBtn.textContent = 'Generating Quiz...';
+
+                const response = await fetch('/api/generate-quiz', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate quiz');
+                }
+
+                const data = await response.json();
+                if (data.quiz) {
+                    // Parse the quiz data if it's a string
+                    const quizData = typeof data.quiz === 'string' ? JSON.parse(data.quiz) : data.quiz;
+                    
+                    // Store the quiz ID for completion
+                    window.currentQuizId = data.quiz_id;
+                    
+                    // Display the quiz
+                    const quizContainer = document.getElementById('quizContainer');
+                    const quizContent = document.getElementById('quizContent');
+                    
+                    // Clear previous quiz content
+                    quizContent.innerHTML = '';
+                    
+                    // Add each question to the quiz
+                    quizData.forEach((question, index) => {
+                        const questionElement = document.createElement('div');
+                        questionElement.className = 'mb-6';
+                        questionElement.innerHTML = `
+                            <p class="font-medium mb-2">${index + 1}. ${question.question}</p>
+                            <div class="space-y-2">
+                                ${question.options.map((option, optIndex) => `
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="q${index}" value="${optIndex}" class="form-radio">
+                                        <span>${option}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        `;
+                        quizContent.appendChild(questionElement);
+                    });
+                    
+                    // Show the quiz container
+                    quizContainer.classList.remove('hidden');
+                }
+
+                // Reset button state
+                generateQuizBtn.disabled = false;
+                generateQuizBtn.textContent = 'Generate Quiz';
+            } catch (error) {
+                console.error('Error generating quiz:', error);
+                alert(error.message || 'Failed to generate quiz. Please try again.');
+                
+                // Reset button state
+                const generateQuizBtn = document.getElementById('generateQuizBtn');
+                generateQuizBtn.disabled = false;
+                generateQuizBtn.textContent = 'Generate Quiz';
+            }
+        }
+
+        async function submitQuiz() {
+            const quizContent = document.getElementById('quizContent');
+            const questions = quizContent.children;
+            let correctAnswers = 0;
+
+            // Get all selected answers
+            const answers = Array.from(questions).map((question, index) => {
+                const selected = question.querySelector(`input[name="q${index}"]:checked`);
+                return selected ? parseInt(selected.value) : null;
+            });
+
+            // Check if all questions are answered
+            if (answers.includes(null)) {
+                alert('Please answer all questions before submitting');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/complete-quiz', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        quiz_id: window.currentQuizId,
+                        correct_answers: correctAnswers // This will be updated by the backend
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit quiz');
+                }
+
+                // Hide quiz
+                document.getElementById('quizContainer').classList.add('hidden');
+                
+                // Show success message
+                alert('Quiz completed successfully! You earned 10 stars!');
+                
+                // Reset generate quiz button
+                document.getElementById('generateQuizBtn').disabled = true;
+                document.getElementById('generateQuizBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            } catch (error) {
+                console.error('Error submitting quiz:', error);
+                alert('Failed to submit quiz. Please try again.');
+            }
+        }
+
+        // Settings Modal Functions
+        function showSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        function hideSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // Theme Toggle Function
+        function toggleTheme() {
+            const body = document.body;
+            const themeLabel = document.getElementById('themeLabel');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            body.classList.toggle('dark-theme');
+            const isDark = body.classList.contains('dark-theme');
+            
+            themeLabel.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+            themeIcon.textContent = isDark ? '🌙' : '🌞';
+            
+            // Save theme preference
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // Load saved preferences on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Load theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('themeLabel').textContent = 'Dark Mode';
+                document.getElementById('themeIcon').textContent = '🌙';
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -551,11 +551,21 @@
             <!-- Quiz Container -->
             <div id="quizContainer" class="px-4 py-8 max-w-md mx-auto space-y-6 hidden">
                 <div id="quizContent" class="space-y-6">
-                    <!-- Quiz content will be inserted here -->
+                    <!-- Question display -->
+                    <div id="currentQuestion" class="mb-6">
+                        <p id="questionText" class="font-medium mb-4"></p>
+                        <div id="optionsContainer" class="space-y-2"></div>
+                        <!-- Submit button -->
+                        <button id="submitAnswerBtn" class="btn-primary w-full mt-4" disabled>
+                            Submit Answer
+                        </button>
+                    </div>
+                    <!-- Progress indicator -->
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span id="questionProgress"></span>
+                        <span id="questionCount"></span>
+                    </div>
                 </div>
-                <button onclick="submitQuiz()" class="btn-primary w-full">
-                    Submit Quiz
-                </button>
             </div>
         </main>
 
@@ -575,6 +585,15 @@
                             <span id="themeIcon">🌞</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Modal -->
+        <div id="completionModal" class="modal">
+            <div class="modal-content">
+                <div id="completionModalContent" class="text-center">
+                    <!-- Content will be dynamically inserted here -->
                 </div>
             </div>
         </div>
@@ -693,6 +712,7 @@
                     const generateQuizBtn = document.getElementById('generateQuizBtn');
                     generateQuizBtn.disabled = true;
                     generateQuizBtn.textContent = 'Uploading...';
+                    generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     
                     const formData = new FormData();
                     for (let file of files) {
@@ -719,13 +739,18 @@
                     // Reset file input
                     event.target.value = '';
                     
+                    // Reset button state to enabled
+                    generateQuizBtn.disabled = false;
+                    generateQuizBtn.textContent = 'Generate Quiz';
+                    generateQuizBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
                     // Show success message
                     alert('Files uploaded successfully! Click "Generate Quiz" to create a quiz.');
                 } catch (error) {
                     console.error('Error uploading files:', error);
                     alert(error.message || 'Failed to upload files. Please try again.');
                     
-                    // Reset button state
+                    // Reset button state to disabled
                     const generateQuizBtn = document.getElementById('generateQuizBtn');
                     generateQuizBtn.disabled = true;
                     generateQuizBtn.textContent = 'Generate Quiz';
@@ -733,6 +758,18 @@
                 }
             }
         }
+
+        // Add level titles
+        const levelTitles = {
+            1: "Novice Learner",
+            2: "Knowledge Seeker",
+            3: "Study Explorer",
+            4: "Learning Enthusiast",
+            5: "Quiz Master",
+            6: "Knowledge Champion",
+            7: "Study Legend",
+            8: "Learning Sage"
+        };
 
         async function generateQuiz() {
             try {
@@ -754,36 +791,19 @@
                     // Parse the quiz data if it's a string
                     const quizData = typeof data.quiz === 'string' ? JSON.parse(data.quiz) : data.quiz;
                     
-                    // Store the quiz ID for completion
-                    window.currentQuizId = data.quiz_id;
-                    
-                    // Display the quiz
+                    // Hide welcome section and show quiz container
+                    document.getElementById('welcomeSection').style.display = 'none';
                     const quizContainer = document.getElementById('quizContainer');
-                    const quizContent = document.getElementById('quizContent');
-                    
-                    // Clear previous quiz content
-                    quizContent.innerHTML = '';
-                    
-                    // Add each question to the quiz
-                    quizData.forEach((question, index) => {
-                        const questionElement = document.createElement('div');
-                        questionElement.className = 'mb-6';
-                        questionElement.innerHTML = `
-                            <p class="font-medium mb-2">${index + 1}. ${question.question}</p>
-                            <div class="space-y-2">
-                                ${question.options.map((option, optIndex) => `
-                                    <label class="flex items-center space-x-2">
-                                        <input type="radio" name="q${index}" value="${optIndex}" class="form-radio">
-                                        <span>${option}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                        `;
-                        quizContent.appendChild(questionElement);
-                    });
-                    
-                    // Show the quiz container
                     quizContainer.classList.remove('hidden');
+                    
+                    // Initialize quiz data
+                    window.quizData = quizData;
+                    window.currentQuizId = data.quiz_id;
+                    window.currentQuestionIndex = 0;
+                    window.correctAnswers = 0;
+                    
+                    // Display the first question
+                    displayQuestion(0);
                 }
 
                 // Reset button state
@@ -800,35 +820,107 @@
             }
         }
 
-        // Add level titles
-        const levelTitles = {
-            1: "Novice Learner",
-            2: "Knowledge Seeker",
-            3: "Study Explorer",
-            4: "Learning Enthusiast",
-            5: "Quiz Master",
-            6: "Knowledge Champion",
-            7: "Study Legend",
-            8: "Learning Sage"
-        };
+        function displayQuestion(index) {
+            const question = window.quizData[index];
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const questionProgress = document.getElementById('questionProgress');
+            const questionCount = document.getElementById('questionCount');
+            const submitButton = document.getElementById('submitAnswerBtn');
+            
+            // Update question text
+            questionText.textContent = `${index + 1}. ${question.question}`;
+            
+            // Update progress indicators
+            questionProgress.textContent = `Question ${index + 1} of ${window.quizData.length}`;
+            questionCount.textContent = `Correct: ${window.correctAnswers}`;
+            
+            // Clear previous options and feedback
+            optionsContainer.innerHTML = '';
+            const existingFeedback = document.querySelector('.feedback-message');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // Reset submit button
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submit Answer';
+            
+            // Add new options
+            question.options.forEach((option, optIndex) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors';
+                label.innerHTML = `
+                    <input type="radio" name="q${index}" value="${optIndex}" class="form-radio">
+                    <span>${option}</span>
+                `;
+                
+                // Add click handler for the option
+                label.addEventListener('click', () => {
+                    // Enable submit button when an option is selected
+                    submitButton.disabled = false;
+                });
+                
+                optionsContainer.appendChild(label);
+            });
+            
+            // Add submit button handler
+            submitButton.onclick = () => handleAnswer(index);
+        }
+
+        async function handleAnswer(questionIndex) {
+            const question = window.quizData[questionIndex];
+            const selectedInput = document.querySelector(`input[name="q${questionIndex}"]:checked`);
+            const submitButton = document.getElementById('submitAnswerBtn');
+            
+            if (!selectedInput) return;
+            
+            const selectedAnswer = parseInt(selectedInput.value);
+            const isCorrect = selectedAnswer === question.correct_answer;
+            
+            // Immediately disable submit button
+            submitButton.disabled = true;
+            
+            // Remove any existing feedback
+            const existingFeedback = document.querySelector('.feedback-message');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // Show feedback immediately
+            const feedback = document.createElement('div');
+            feedback.className = `mt-4 p-4 rounded-lg feedback-message ${
+                isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`;
+            feedback.textContent = isCorrect ? 
+                'Correct! Well done! 🎉' : 
+                'Incorrect. Try again!';
+            
+            // Insert feedback after options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.appendChild(feedback);
+            
+            if (isCorrect) {
+                window.correctAnswers++;
+                // Wait a moment before moving to next question
+                setTimeout(() => {
+                    if (questionIndex < window.quizData.length - 1) {
+                        window.currentQuestionIndex++;
+                        displayQuestion(window.currentQuestionIndex);
+                    } else {
+                        // Quiz completed
+                        submitQuiz();
+                    }
+                }, 1500);
+            } else {
+                // Re-enable submit button for retry after a shorter delay
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                }, 800);
+            }
+        }
 
         async function submitQuiz() {
-            const quizContent = document.getElementById('quizContent');
-            const questions = quizContent.children;
-            let correctAnswers = 0;
-
-            // Get all selected answers
-            const answers = Array.from(questions).map((question, index) => {
-                const selected = question.querySelector(`input[name="q${index}"]:checked`);
-                return selected ? parseInt(selected.value) : null;
-            });
-
-            // Check if all questions are answered
-            if (answers.includes(null)) {
-                alert('Please answer all questions before submitting');
-                return;
-            }
-
             try {
                 const response = await fetch('/api/complete-quiz', {
                     method: 'POST',
@@ -836,59 +928,112 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        quiz_id: window.currentQuizId,
-                        correct_answers: correctAnswers
+                        correct_answers: window.correctAnswers
                     })
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to submit quiz');
-                }
-
+                
                 const data = await response.json();
-
-                // Update level and stats
-                const currentLevelTitle = levelTitles[data.current_level];
-                document.getElementById('userLevel').textContent = `${currentLevelTitle}`;
-                document.getElementById('currentLevel').textContent = data.current_level;
-                document.getElementById('quizzesCompleted').textContent = data.quizzes_completed;
                 
-                // Update next level information
-                const nextLevel = data.current_level + 1;
-                const nextLevelTitle = levelTitles[nextLevel];
-                document.getElementById('nextLevelTitle').textContent = `${nextLevelTitle} (Level ${nextLevel})`;
-                
-                // Calculate and update progress bar
-                const progressInLevel = data.quizzes_completed;
-                const nextRequirement = data.next_level_requirement;
-                const percentage = Math.min((progressInLevel / nextRequirement) * 100, 100);
-                
-                // Update progress bar
-                document.getElementById('levelProgressBar').style.width = `${percentage}%`;
-                
-                // Update quizzes remaining text
-                const quizzesRemaining = data.next_level_requirement - data.quizzes_completed;
-                document.getElementById('quizzesRemaining').textContent = 
-                    `Complete ${quizzesRemaining} more ${quizzesRemaining === 1 ? 'quiz' : 'quizzes'}`;
-
-                // Hide quiz
-                document.getElementById('quizContainer').classList.add('hidden');
-                
-                // Show success message with level up notification if applicable
-                if (data.current_level > parseInt(document.getElementById('currentLevel').textContent)) {
-                    alert(`Congratulations! You've reached ${currentLevelTitle}! 🎉\nYou earned 10 stars!`);
-                } else {
-                    alert('Quiz completed successfully! You earned 10 stars!');
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to submit quiz');
                 }
                 
-                // Reset generate quiz button
-                document.getElementById('generateQuizBtn').disabled = true;
-                document.getElementById('generateQuizBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                // Update user stats
+                document.getElementById('userLevel').textContent = data.current_level;
+                document.getElementById('userStars').textContent = data.total_stars;
+                document.getElementById('shopStars').textContent = data.total_stars;
+                
+                // Show completion modal
+                const modal = document.getElementById('completionModal');
+                const modalContent = document.getElementById('completionModalContent');
+                
+                if (data.current_level > parseInt(document.getElementById('userLevel').textContent)) {
+                    modalContent.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🎉</div>
+                            <h2 class="text-2xl font-bold mb-4">Level Up!</h2>
+                            <p class="mb-4">You've reached level ${data.current_level}!</p>
+                            <p class="mb-4">Stars earned: ${data.total_stars}</p>
+                            <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                Continue Learning
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    modalContent.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🌟</div>
+                            <h2 class="text-2xl font-bold mb-4">Quiz Completed!</h2>
+                            <p class="mb-4">Stars earned: ${data.total_stars}</p>
+                            <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                Continue Learning
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                modal.style.display = 'block';
             } catch (error) {
                 console.error('Error submitting quiz:', error);
-                alert('Failed to submit quiz. Please try again.');
+                // Show error in a modal instead of alert
+                const modal = document.getElementById('completionModal');
+                const modalContent = document.getElementById('completionModalContent');
+                modalContent.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">⚠️</div>
+                        <h2 class="text-2xl font-bold mb-4">Oops!</h2>
+                        <p class="mb-4">There was an error submitting your quiz.</p>
+                        <p class="mb-4 text-sm text-gray-600">${error.message}</p>
+                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Return to Main
+                        </button>
+                    </div>
+                `;
+                modal.style.display = 'block';
             }
         }
+
+        function returnToMain() {
+            // Hide all modals
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+            
+            // Show welcome section
+            const welcomeSection = document.getElementById('welcomeSection');
+            welcomeSection.style.display = 'block';
+            
+            // Hide quiz container
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.classList.add('hidden');
+            
+            // Reset generate quiz button
+            const generateQuizBtn = document.getElementById('generateQuizBtn');
+            generateQuizBtn.disabled = true;
+            generateQuizBtn.textContent = 'Generate Quiz';
+            generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Clear uploaded files
+            document.getElementById('uploadedFiles').innerHTML = '<p class="text-gray-500 text-center">No files uploaded yet</p>';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Update modal click handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for all modals
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        if (modal.id === 'completionModal') {
+                            returnToMain();
+                        }
+                    }
+                });
+            });
+        });
 
         // Settings Modal Functions
         function showSettingsModal() {

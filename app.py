@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import json
 from docx import Document
 import io
+from PyPDF2 import PdfReader
 
 # Load environment variables
 load_dotenv()
@@ -42,6 +43,12 @@ class Quiz(db.Model):
     completed = db.Column(db.Boolean, default=False)
     score = db.Column(db.Integer, nullable=True)
 
+class UserStats(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quizzes_completed = db.Column(db.Integer, default=0)
+    total_stars = db.Column(db.Integer, default=0)
+    current_level = db.Column(db.Integer, default=1)
+
 def extract_text_from_file(file):
     try:
         if file.filename.endswith('.txt'):
@@ -49,8 +56,16 @@ def extract_text_from_file(file):
             file.seek(0)  # Reset file pointer
             return content
         elif file.filename.endswith('.pdf'):
-            # Add PDF processing logic here
-            return "PDF content placeholder"
+            # Process PDF files
+            pdf_reader = PdfReader(io.BytesIO(file.read()))
+            file.seek(0)  # Reset file pointer
+            
+            # Extract text from all pages
+            text_content = []
+            for page in pdf_reader.pages:
+                text_content.append(page.extract_text())
+            
+            return '\n'.join(text_content)
         elif file.filename.endswith('.docx'):
             # Process DOCX files
             doc = Document(io.BytesIO(file.read()))
@@ -149,103 +164,101 @@ def generate_quiz():
 
         # Generate quiz using OpenAI
         try:
-            response = openai.chat.completions.create(
-                model="gpt-4",
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a quiz generator. Create multiple choice questions based on the provided content. Each question should have 4 options with one correct answer. Format the response as a JSON array of questions, where each question has 'question', 'options', and 'correct_answer' fields."},
+                    {"role": "system", "content": "You are a quiz generator. Create multiple choice questions based on the provided content. Each question should have 4 options with one correct answer. Format the response as a JSON array of questions, where each question has 'question', 'options', and 'correct_answer' fields. Example format: [{\"question\": \"What is X?\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_answer\": 0}]"},
                     {"role": "user", "content": f"Create a quiz with 5 multiple choice questions based on this content: {study_material.content}"}
                 ],
                 temperature=0.7,
                 max_tokens=1000
             )
 
-            quiz_data = json.loads(response.choices[0].message.content)
-            print(f"Generated quiz data: {json.dumps(quiz_data, indent=2)}")  # Print generated quiz for debugging
+            # Print the raw response for debugging
+            print(f"Raw response: {response.choices[0].message['content']}")
             
-            # Create quiz in database
-            quiz = Quiz(questions=quiz_data)
-            db.session.add(quiz)
-            db.session.commit()
+            try:
+                quiz_data = json.loads(response.choices[0].message['content'])
+                print(f"Generated quiz data: {json.dumps(quiz_data, indent=2)}")  # Print generated quiz for debugging
+                
+                # Create quiz in database
+                quiz = Quiz(questions=quiz_data)
+                db.session.add(quiz)
+                db.session.commit()
 
-            return jsonify({
-                'quiz': quiz_data,
-                'quiz_id': quiz.id
-            }), 200
+                return jsonify({
+                    'quiz': quiz_data,
+                    'quiz_id': quiz.id
+                }), 200
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing error: {str(e)}")
+                print(f"Failed to parse response: {response.choices[0].message['content']}")
+                return jsonify({'error': 'Invalid quiz format received. Please try again.'}), 500
+                
         except Exception as api_error:
             print(f"OpenAI API error: {str(api_error)}")
-            return jsonify({'error': 'Failed to generate quiz. Please try again.'}), 500
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing error: {str(e)}")
-            return jsonify({'error': 'Invalid quiz format received. Please try again.'}), 500
+            return jsonify({'error': f'Failed to generate quiz: {str(api_error)}'}), 500
+            
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
-def calculate_level(quizzes_completed):
-    if quizzes_completed >= 500:
-        return 8  # Max level
-    elif quizzes_completed >= 100:
-        return 7
-    elif quizzes_completed >= 50:
-        return 6
-    elif quizzes_completed >= 25:
-        return 5
-    elif quizzes_completed >= 10:
-        return 4
-    elif quizzes_completed >= 5:
-        return 3
-    elif quizzes_completed >= 1:
-        return 2
-    else:
-        return 1
 
 @app.route('/api/complete-quiz', methods=['POST'])
 def complete_quiz():
     try:
         data = request.get_json()
-        quiz_id = data.get('quiz_id')
+        correct_answers = data.get('correct_answers', 0)
         
-        if not quiz_id:
-            return jsonify({'error': 'Quiz ID is required'}), 400
-
-        quiz = Quiz.query.get_or_404(quiz_id)
+        # Calculate stars earned (10 stars per quiz)
+        stars_earned = 10
         
-        # Update quiz status
-        quiz.completed = True
-        quiz.score = data.get('correct_answers', 0)
+        # Get user stats
+        user_stats = UserStats.query.first()
+        if not user_stats:
+            user_stats = UserStats()
+            db.session.add(user_stats)
         
-        # Count total completed quizzes
-        completed_quizzes = Quiz.query.filter_by(completed=True).count() + 1  # Including current quiz
+        # Update user stats
+        user_stats.quizzes_completed += 1
+        user_stats.total_stars += stars_earned
         
-        # Calculate new level
-        new_level = calculate_level(completed_quizzes)
+        # Check for level up
+        current_level = user_stats.current_level
+        next_level_requirement = current_level * 5  # 5 quizzes per level
         
-        # Calculate next level requirement
-        next_level_req = 1 if completed_quizzes == 0 else \
-                        5 if completed_quizzes == 1 else \
-                        10 if completed_quizzes < 5 else \
-                        25 if completed_quizzes < 10 else \
-                        50 if completed_quizzes < 25 else \
-                        100 if completed_quizzes < 50 else \
-                        500 if completed_quizzes < 100 else \
-                        500
-
+        if user_stats.quizzes_completed >= next_level_requirement:
+            user_stats.current_level += 1
+        
+        # Save changes
         db.session.commit()
-
+        
         return jsonify({
-            'message': 'Quiz completed successfully',
-            'stars_earned': 10,
-            'quizzes_completed': completed_quizzes,
-            'current_level': new_level,
-            'next_level_requirement': next_level_req
-        }), 200
+            'current_level': user_stats.current_level,
+            'quizzes_completed': user_stats.quizzes_completed,
+            'next_level_requirement': user_stats.current_level * 5,
+            'total_stars': user_stats.total_stars
+        })
     except Exception as e:
         db.session.rollback()
+        print(f"Error in complete_quiz: {str(e)}")  # Add logging
         return jsonify({'error': str(e)}), 500
+
+@app.route('/quiz')
+def quiz():
+    return render_template('quiz.html')
 
 # Initialize database
 with app.app_context():
     db.create_all()
+    # Create default user stats if none exist
+    if not UserStats.query.first():
+        default_stats = UserStats(
+            quizzes_completed=0,
+            total_stars=0,
+            current_level=1
+        )
+        db.session.add(default_stats)
+        db.session.commit()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=4444, debug=True) 

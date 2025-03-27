@@ -318,7 +318,7 @@
                         </button>
                         <div class="stats-container">
                             <span class="level-badge text-white text-sm font-semibold badge-button" onclick="showLevelModal()">
-                                🏆 <span id="userLevel" class="text-sm">Novice</span>
+                                🏆 <span id="userLevel" class="text-sm">Novice Learner</span>
                             </span>
                             <span class="stars-badge text-white text-sm font-semibold badge-button" onclick="showShopModal()">
                                 ⭐ <span id="userStars">0</span>
@@ -370,15 +370,15 @@
                     <div>
                         <h4 class="font-semibold mb-2">Next Level</h4>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="flex justify-between items-center mb-2">
-                                <span id="nextLevelTitle" class="font-medium">Knowledge Seeker</span>
-                                <span class="text-sm text-gray-500">Level 2</span>
+                            <div class="flex justify-between items-center mb-3">
+                                <span id="nextLevelTitle" class="font-medium text-lg">Knowledge Seeker (Level 2)</span>
                             </div>
-                            <div class="text-sm text-gray-500 mb-2">Requirements:</div>
-                            <ul class="text-sm space-y-1">
-                                <li>• 5 hours of study time</li>
-                                <li>• Complete 3 quizzes</li>
-                            </ul>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                                <div id="levelProgressBar" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 text-center">
+                                <span id="quizzesRemaining">Complete 1 more quiz</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -393,9 +393,12 @@
                     <button onclick="hideShopModal()" class="text-gray-500">✕</button>
                 </div>
                 <div class="mb-4">
-                    <div class="bg-yellow-50 p-3 rounded-lg flex justify-between items-center">
-                        <span class="font-medium">Your Stars</span>
-                        <span class="text-xl font-bold">⭐ <span id="shopStars">0</span></span>
+                    <div class="bg-yellow-50 p-3 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">Your Stars</span>
+                            <span class="text-xl font-bold">⭐ <span id="shopStars">0</span></span>
+                        </div>
+                        <p class="text-sm text-gray-600">Complete quizzes and get correct answers to earn stars!</p>
                     </div>
                 </div>
                 <div class="space-y-6">
@@ -797,6 +800,18 @@
             }
         }
 
+        // Add level titles
+        const levelTitles = {
+            1: "Novice Learner",
+            2: "Knowledge Seeker",
+            3: "Study Explorer",
+            4: "Learning Enthusiast",
+            5: "Quiz Master",
+            6: "Knowledge Champion",
+            7: "Study Legend",
+            8: "Learning Sage"
+        };
+
         async function submitQuiz() {
             const quizContent = document.getElementById('quizContent');
             const questions = quizContent.children;
@@ -822,7 +837,7 @@
                     },
                     body: JSON.stringify({
                         quiz_id: window.currentQuizId,
-                        correct_answers: correctAnswers // This will be updated by the backend
+                        correct_answers: correctAnswers
                     })
                 });
 
@@ -830,11 +845,41 @@
                     throw new Error('Failed to submit quiz');
                 }
 
+                const data = await response.json();
+
+                // Update level and stats
+                const currentLevelTitle = levelTitles[data.current_level];
+                document.getElementById('userLevel').textContent = `${currentLevelTitle}`;
+                document.getElementById('currentLevel').textContent = data.current_level;
+                document.getElementById('quizzesCompleted').textContent = data.quizzes_completed;
+                
+                // Update next level information
+                const nextLevel = data.current_level + 1;
+                const nextLevelTitle = levelTitles[nextLevel];
+                document.getElementById('nextLevelTitle').textContent = `${nextLevelTitle} (Level ${nextLevel})`;
+                
+                // Calculate and update progress bar
+                const progressInLevel = data.quizzes_completed;
+                const nextRequirement = data.next_level_requirement;
+                const percentage = Math.min((progressInLevel / nextRequirement) * 100, 100);
+                
+                // Update progress bar
+                document.getElementById('levelProgressBar').style.width = `${percentage}%`;
+                
+                // Update quizzes remaining text
+                const quizzesRemaining = data.next_level_requirement - data.quizzes_completed;
+                document.getElementById('quizzesRemaining').textContent = 
+                    `Complete ${quizzesRemaining} more ${quizzesRemaining === 1 ? 'quiz' : 'quizzes'}`;
+
                 // Hide quiz
                 document.getElementById('quizContainer').classList.add('hidden');
                 
-                // Show success message
-                alert('Quiz completed successfully! You earned 10 stars!');
+                // Show success message with level up notification if applicable
+                if (data.current_level > parseInt(document.getElementById('currentLevel').textContent)) {
+                    alert(`Congratulations! You've reached ${currentLevelTitle}! 🎉\nYou earned 10 stars!`);
+                } else {
+                    alert('Quiz completed successfully! You earned 10 stars!');
+                }
                 
                 // Reset generate quiz button
                 document.getElementById('generateQuizBtn').disabled = true;
@@ -880,6 +925,93 @@
                 document.getElementById('themeIcon').textContent = '🌙';
             }
         });
+
+        // Badge button functions
+        function showLevelModal() {
+            document.getElementById('levelModal').style.display = 'block';
+        }
+
+        function hideLevelModal() {
+            document.getElementById('levelModal').style.display = 'none';
+        }
+
+        function showShopModal() {
+            document.getElementById('shopModal').style.display = 'block';
+        }
+
+        function hideShopModal() {
+            document.getElementById('shopModal').style.display = 'none';
+        }
+
+        function celebrateStreak() {
+            const streakCount = parseInt(document.getElementById('streakCount').textContent);
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            
+            let content;
+            if (streakCount === 0) {
+                content = `
+                    <div class="modal-content text-center">
+                        <h3 class="text-xl font-bold mb-4">0 Day Quiz Streak 😢 😔 😪</h3>
+                        <p class="text-gray-600 mb-6">Start your learning journey today!</p>
+                        <button onclick="returnToHome()" class="btn-primary w-full">
+                            Start Learning Now
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Trigger confetti for non-zero streaks
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                
+                content = `
+                    <div class="modal-content text-center">
+                        <h3 class="text-xl font-bold mb-4">${streakCount} Day Quiz Streak! 🔥</h3>
+                        <p class="text-gray-600 mb-4">Keep up the great work!</p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="this.closest('.modal').style.display='none'" class="btn-primary">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            modal.innerHTML = content;
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    setTimeout(() => modal.remove(), 300);
+                }
+            });
+        }
+
+        function returnToHome() {
+            // Hide all modals
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+                setTimeout(() => modal.remove(), 300);
+            });
+            
+            // Show welcome section
+            document.getElementById('welcomeSection').scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight the upload container
+            const uploadContainer = document.querySelector('.upload-container');
+            uploadContainer.style.borderColor = '#7c3aed';
+            uploadContainer.style.backgroundColor = '#f5f3ff';
+            setTimeout(() => {
+                uploadContainer.style.borderColor = '';
+                uploadContainer.style.backgroundColor = '';
+            }, 2000);
+        }
     </script>
 </body>
 </html> 

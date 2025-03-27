@@ -181,6 +181,24 @@ def generate_quiz():
         print(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+def calculate_level(quizzes_completed):
+    if quizzes_completed >= 500:
+        return 8  # Max level
+    elif quizzes_completed >= 100:
+        return 7
+    elif quizzes_completed >= 50:
+        return 6
+    elif quizzes_completed >= 25:
+        return 5
+    elif quizzes_completed >= 10:
+        return 4
+    elif quizzes_completed >= 5:
+        return 3
+    elif quizzes_completed >= 1:
+        return 2
+    else:
+        return 1
+
 @app.route('/api/complete-quiz', methods=['POST'])
 def complete_quiz():
     try:
@@ -196,11 +214,30 @@ def complete_quiz():
         quiz.completed = True
         quiz.score = data.get('correct_answers', 0)
         
+        # Count total completed quizzes
+        completed_quizzes = Quiz.query.filter_by(completed=True).count() + 1  # Including current quiz
+        
+        # Calculate new level
+        new_level = calculate_level(completed_quizzes)
+        
+        # Calculate next level requirement
+        next_level_req = 1 if completed_quizzes == 0 else \
+                        5 if completed_quizzes == 1 else \
+                        10 if completed_quizzes < 5 else \
+                        25 if completed_quizzes < 10 else \
+                        50 if completed_quizzes < 25 else \
+                        100 if completed_quizzes < 50 else \
+                        500 if completed_quizzes < 100 else \
+                        500
+
         db.session.commit()
 
         return jsonify({
             'message': 'Quiz completed successfully',
-            'stars_earned': 10
+            'stars_earned': 10,
+            'quizzes_completed': completed_quizzes,
+            'current_level': new_level,
+            'next_level_requirement': next_level_req
         }), 200
     except Exception as e:
         db.session.rollback()

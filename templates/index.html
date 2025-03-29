@@ -938,16 +938,45 @@
                     throw new Error(data.error || 'Failed to submit quiz');
                 }
                 
-                // Update user stats
-                document.getElementById('userLevel').textContent = data.current_level;
+                // Update user stats immediately
+                document.getElementById('userLevel').textContent = levelTitles[data.current_level];
                 document.getElementById('userStars').textContent = data.total_stars;
                 document.getElementById('shopStars').textContent = data.total_stars;
+                document.getElementById('streakCount').textContent = data.current_streak;
+                
+                // Update level modal displays
+                document.getElementById('currentLevel').textContent = data.current_level;
+                document.getElementById('quizzesCompleted').textContent = data.quizzes_completed;
+                
+                // Update next level information
+                const nextLevel = data.current_level + 1;
+                const nextLevelTitle = levelTitles[nextLevel] || 'Max Level';
+                document.getElementById('nextLevelTitle').textContent = `${nextLevelTitle} (Level ${nextLevel})`;
+                
+                // Calculate and update progress bar
+                const progressInLevel = data.quizzes_completed;
+                const nextRequirement = data.next_level_requirement;
+                const percentage = Math.min((progressInLevel / nextRequirement) * 100, 100);
+                
+                // Update progress bar
+                document.getElementById('levelProgressBar').style.width = `${percentage}%`;
+                
+                // Update quizzes remaining text
+                const quizzesRemaining = data.next_level_requirement - data.quizzes_completed;
+                document.getElementById('quizzesRemaining').textContent = 
+                    `Complete ${quizzesRemaining} more ${quizzesRemaining === 1 ? 'quiz' : 'quizzes'}`;
+                    
+                // Update progress ring
+                const progressRing = document.getElementById('levelProgress');
+                const circumference = 326.7256359733385; // 2 * π * r
+                const offset = circumference - (percentage / 100) * circumference;
+                progressRing.style.strokeDashoffset = offset;
                 
                 // Show completion modal
                 const modal = document.getElementById('completionModal');
                 const modalContent = document.getElementById('completionModalContent');
                 
-                if (data.current_level > parseInt(document.getElementById('userLevel').textContent)) {
+                if (data.current_level > parseInt(document.getElementById('currentLevel').textContent)) {
                     modalContent.innerHTML = `
                         <div class="text-center">
                             <div class="text-6xl mb-4">🎉</div>
@@ -1033,6 +1062,9 @@
                     }
                 });
             });
+
+            // Load initial user stats
+            loadUserStats();
         });
 
         // Settings Modal Functions
@@ -1090,18 +1122,18 @@
 
         function celebrateStreak() {
             const streakCount = parseInt(document.getElementById('streakCount').textContent);
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'block';
+            const modal = document.getElementById('completionModal');
+            const modalContent = document.getElementById('completionModalContent');
             
             let content;
             if (streakCount === 0) {
                 content = `
-                    <div class="modal-content text-center">
-                        <h3 class="text-xl font-bold mb-4">0 Day Quiz Streak 😢 😔 😪</h3>
-                        <p class="text-gray-600 mb-6">Start your learning journey today!</p>
-                        <button onclick="returnToHome()" class="btn-primary w-full">
-                            Start Learning Now
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">😢</div>
+                        <h2 class="text-2xl font-bold mb-4">Start Your Streak!</h2>
+                        <p class="mb-4">Complete a quiz today to begin your learning streak!</p>
+                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Start Learning
                         </button>
                     </div>
                 `;
@@ -1114,28 +1146,20 @@
                 });
                 
                 content = `
-                    <div class="modal-content text-center">
-                        <h3 class="text-xl font-bold mb-4">${streakCount} Day Quiz Streak! 🔥</h3>
-                        <p class="text-gray-600 mb-4">Keep up the great work!</p>
-                        <div class="flex justify-center space-x-4">
-                            <button onclick="this.closest('.modal').style.display='none'" class="btn-primary">
-                                Continue
-                            </button>
-                        </div>
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">🔥</div>
+                        <h2 class="text-2xl font-bold mb-4">${streakCount} Day Streak!</h2>
+                        <p class="mb-4">Keep up the amazing work!</p>
+                        <p class="text-sm text-gray-600 mb-4">Complete a quiz every day to maintain your streak</p>
+                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Continue Learning
+                        </button>
                     </div>
                 `;
             }
             
-            modal.innerHTML = content;
-            document.body.appendChild(modal);
-            
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                    setTimeout(() => modal.remove(), 300);
-                }
-            });
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
         }
 
         function returnToHome() {
@@ -1156,6 +1180,57 @@
                 uploadContainer.style.borderColor = '';
                 uploadContainer.style.backgroundColor = '';
             }, 2000);
+        }
+
+        // Add function to load user stats
+        async function loadUserStats() {
+            try {
+                const response = await fetch('/api/complete-quiz', {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load user stats');
+                }
+                
+                const data = await response.json();
+                
+                // Update user stats display
+                document.getElementById('userLevel').textContent = levelTitles[data.current_level];
+                document.getElementById('userStars').textContent = data.total_stars;
+                document.getElementById('shopStars').textContent = data.total_stars;
+                document.getElementById('streakCount').textContent = data.current_streak;
+                
+                // Update level modal displays
+                document.getElementById('currentLevel').textContent = data.current_level;
+                document.getElementById('quizzesCompleted').textContent = data.quizzes_completed;
+                
+                // Update next level information
+                const nextLevel = data.current_level + 1;
+                const nextLevelTitle = levelTitles[nextLevel] || 'Max Level';
+                document.getElementById('nextLevelTitle').textContent = `${nextLevelTitle} (Level ${nextLevel})`;
+                
+                // Calculate and update progress bar
+                const progressInLevel = data.quizzes_completed;
+                const nextRequirement = data.next_level_requirement;
+                const percentage = Math.min((progressInLevel / nextRequirement) * 100, 100);
+                
+                // Update progress bar
+                document.getElementById('levelProgressBar').style.width = `${percentage}%`;
+                
+                // Update quizzes remaining text
+                const quizzesRemaining = data.next_level_requirement - data.quizzes_completed;
+                document.getElementById('quizzesRemaining').textContent = 
+                    `Complete ${quizzesRemaining} more ${quizzesRemaining === 1 ? 'quiz' : 'quizzes'}`;
+                    
+                // Update progress ring
+                const progressRing = document.getElementById('levelProgress');
+                const circumference = 326.7256359733385; // 2 * π * r
+                const offset = circumference - (percentage / 100) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+            } catch (error) {
+                console.error('Error loading user stats:', error);
+            }
         }
     </script>
 </body>

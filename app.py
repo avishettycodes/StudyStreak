@@ -48,6 +48,8 @@ class UserStats(db.Model):
     quizzes_completed = db.Column(db.Integer, default=0)
     total_stars = db.Column(db.Integer, default=0)
     current_level = db.Column(db.Integer, default=1)
+    current_streak = db.Column(db.Integer, default=0)
+    last_quiz_date = db.Column(db.DateTime, nullable=True)
 
 def extract_text_from_file(file):
     try:
@@ -203,45 +205,87 @@ def generate_quiz():
         print(f"Unexpected error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/complete-quiz', methods=['POST'])
+@app.route('/api/complete-quiz', methods=['GET', 'POST'])
 def complete_quiz():
-    try:
-        data = request.get_json()
-        correct_answers = data.get('correct_answers', 0)
-        
-        # Calculate stars earned (10 stars per quiz)
-        stars_earned = 10
-        
-        # Get user stats
-        user_stats = UserStats.query.first()
-        if not user_stats:
-            user_stats = UserStats()
-            db.session.add(user_stats)
-        
-        # Update user stats
-        user_stats.quizzes_completed += 1
-        user_stats.total_stars += stars_earned
-        
-        # Check for level up
-        current_level = user_stats.current_level
-        next_level_requirement = current_level * 5  # 5 quizzes per level
-        
-        if user_stats.quizzes_completed >= next_level_requirement:
-            user_stats.current_level += 1
-        
-        # Save changes
-        db.session.commit()
-        
-        return jsonify({
-            'current_level': user_stats.current_level,
-            'quizzes_completed': user_stats.quizzes_completed,
-            'next_level_requirement': user_stats.current_level * 5,
-            'total_stars': user_stats.total_stars
-        })
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error in complete_quiz: {str(e)}")  # Add logging
-        return jsonify({'error': str(e)}), 500
+    if request.method == 'GET':
+        try:
+            # Get user stats
+            user_stats = UserStats.query.first()
+            if not user_stats:
+                user_stats = UserStats()
+                db.session.add(user_stats)
+                db.session.commit()
+            
+            return jsonify({
+                'current_level': user_stats.current_level,
+                'quizzes_completed': user_stats.quizzes_completed,
+                'next_level_requirement': user_stats.current_level * 5,
+                'total_stars': user_stats.total_stars,
+                'current_streak': user_stats.current_streak
+            })
+        except Exception as e:
+            print(f"Error getting user stats: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            correct_answers = data.get('correct_answers', 0)
+            
+            # Calculate stars earned (10 stars per quiz)
+            stars_earned = 10
+            
+            # Get user stats
+            user_stats = UserStats.query.first()
+            if not user_stats:
+                user_stats = UserStats()
+                db.session.add(user_stats)
+            
+            # Update user stats
+            user_stats.quizzes_completed += 1
+            user_stats.total_stars += stars_earned
+            
+            # Update streak
+            current_date = datetime.utcnow()
+            if user_stats.last_quiz_date:
+                last_date = user_stats.last_quiz_date.date()
+                current_date_only = current_date.date()
+                if (current_date_only - last_date).days == 1:
+                    user_stats.current_streak += 1
+                elif (current_date_only - last_date).days > 1:
+                    user_stats.current_streak = 1
+                elif (current_date_only - last_date).days == 0:
+                    # Same day, don't update streak
+                    pass
+                else:
+                    user_stats.current_streak = 1
+            else:
+                user_stats.current_streak = 1
+            
+            # Always update last_quiz_date
+            user_stats.last_quiz_date = current_date
+            
+            # Check for level up
+            current_level = user_stats.current_level
+            next_level_requirement = current_level * 5  # 5 quizzes per level
+            
+            if user_stats.quizzes_completed >= next_level_requirement:
+                user_stats.current_level += 1
+            
+            # Save changes
+            db.session.commit()
+            
+            return jsonify({
+                'current_level': user_stats.current_level,
+                'quizzes_completed': user_stats.quizzes_completed,
+                'next_level_requirement': user_stats.current_level * 5,
+                'total_stars': user_stats.total_stars,
+                'current_streak': user_stats.current_streak
+            })
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in complete_quiz: {str(e)}")
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/quiz')
 def quiz():
@@ -249,16 +293,21 @@ def quiz():
 
 # Initialize database
 with app.app_context():
+    # Drop all tables first
+    db.drop_all()
+    # Create all tables
     db.create_all()
-    # Create default user stats if none exist
-    if not UserStats.query.first():
-        default_stats = UserStats(
-            quizzes_completed=0,
-            total_stars=0,
-            current_level=1
-        )
-        db.session.add(default_stats)
-        db.session.commit()
+    
+    # Create default user stats
+    default_stats = UserStats(
+        quizzes_completed=0,
+        total_stars=0,
+        current_level=1,
+        current_streak=0,
+        last_quiz_date=None
+    )
+    db.session.add(default_stats)
+    db.session.commit()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=4444, debug=True) 

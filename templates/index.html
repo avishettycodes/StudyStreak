@@ -686,6 +686,50 @@
                 </div>
             </div>
         </div>
+
+        <div id="resultsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4 relative">
+                <button onclick="closeResultsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">🎉 Congratulations!</h3>
+                    <p class="text-lg text-gray-600">Here are your results for <span id="resultCourseName" class="font-semibold"></span></p>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Correct Answers</p>
+                                <p id="correctAnswers" class="font-semibold text-green-600"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Wrong Answers</p>
+                                <p id="wrongAnswers" class="font-semibold text-red-600"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Average Score</p>
+                                <p id="averageScore" class="font-semibold text-blue-600"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Completion Date</p>
+                                <p id="completionDate" class="font-semibold text-gray-900"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Days to Complete</p>
+                                <p id="daysToComplete" class="font-semibold text-gray-900"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Quizzes Completed</p>
+                                <p id="quizzesCompleted" class="font-semibold text-gray-900"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -694,6 +738,8 @@
         let currentQuestion = 0;
         let score = 0;
         let isQuizComplete = false;
+        let currentQuizId = null;
+        let currentCourseName = null;
 
         function showHomeScreen() {
             const quizContainer = document.getElementById('quizContainer');
@@ -709,6 +755,7 @@
             showHomeScreen();
             loadUserStats();
             updateCoursesInProgress();
+            updateCompletedCourses(); // Add this line
         });
 
         // Add level titles
@@ -929,26 +976,53 @@
             const fileInput = document.getElementById('courseFiles');
             const uploadedFilesList = document.getElementById('uploadedFilesList');
 
-            // Handle number input limits
-            daysToComplete.addEventListener('input', function() {
-                let value = parseInt(this.value);
-                if (value > 365) {
-                    this.value = 365;
-                }
-            });
+            // Define maximum limits
+            const MAX_DAYS = 365;
+            const MAX_QUIZZES_PER_DAY = 5;
+            const MAX_QUESTIONS_PER_QUIZ = 50;
 
-            quizzesPerDay.addEventListener('input', function() {
-                let value = parseInt(this.value);
-                if (value > 5) {
-                    this.value = 5;
+            // Function to enforce limits on numeric inputs
+            function enforceNumericLimit(input, maxValue) {
+                const value = parseInt(input.value);
+                if (value > maxValue) {
+                    input.value = maxValue;
+                    // Trigger change event to update form validation
+                    input.dispatchEvent(new Event('change'));
                 }
-            });
+            }
 
-            questionsPerQuiz.addEventListener('input', function() {
-                let value = parseInt(this.value);
-                if (value > 50) {
-                    this.value = 50;
-                }
+            // Validate required fields
+            function validateForm() {
+                // Enforce limits on numeric inputs
+                enforceNumericLimit(daysToComplete, MAX_DAYS);
+                enforceNumericLimit(quizzesPerDay, MAX_QUIZZES_PER_DAY);
+                enforceNumericLimit(questionsPerQuiz, MAX_QUESTIONS_PER_QUIZ);
+
+                // Check if all required fields have values
+                const hasValues = courseName.value.trim() !== '' &&
+                                 daysToComplete.value.trim() !== '' &&
+                                 quizzesPerDay.value.trim() !== '' &&
+                                 questionsPerQuiz.value.trim() !== '';
+
+                // Check if numeric values are within valid ranges
+                const daysValue = parseInt(daysToComplete.value);
+                const quizzesValue = parseInt(quizzesPerDay.value);
+                const questionsValue = parseInt(questionsPerQuiz.value);
+
+                const hasValidRanges = daysValue > 0 && daysValue <= MAX_DAYS &&
+                                     quizzesValue > 0 && quizzesValue <= MAX_QUIZZES_PER_DAY &&
+                                     questionsValue > 0 && questionsValue <= MAX_QUESTIONS_PER_QUIZ;
+
+                // Enable button only if all conditions are met
+                createCourseBtn.disabled = !(hasValues && hasValidRanges);
+                return hasValues && hasValidRanges;
+            }
+
+            // Add input event listeners for all required fields
+            [courseName, daysToComplete, quizzesPerDay, questionsPerQuiz].forEach(input => {
+                input.addEventListener('input', validateForm);
+                input.addEventListener('blur', validateForm);
+                input.addEventListener('change', validateForm);
             });
 
             // Handle character count for additional input
@@ -981,32 +1055,55 @@
             uploadContainer.addEventListener('drop', handleDrop, false);
             uploadContainer.addEventListener('click', () => fileInput.click());
 
-            // Validate required fields
-            function validateForm() {
-                const isValid = courseName.value.trim() !== '' &&
-                              daysToComplete.value.trim() !== '' &&
-                              quizzesPerDay.value.trim() !== '' &&
-                              questionsPerQuiz.value.trim() !== '' &&
-                              parseInt(daysToComplete.value) > 0 &&
-                              parseInt(daysToComplete.value) <= 365 &&
-                              parseInt(quizzesPerDay.value) > 0 &&
-                              parseInt(quizzesPerDay.value) <= 5 &&
-                              parseInt(questionsPerQuiz.value) > 0 &&
-                              parseInt(questionsPerQuiz.value) <= 50 &&
-                              fileInput.files.length > 0;
-                createCourseBtn.disabled = !isValid;
-            }
+            // Create course button click handler
+            createCourseBtn.onclick = function(e) {
+                e.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
 
-            // Add input event listeners for all required fields
-            [courseName, daysToComplete, quizzesPerDay, questionsPerQuiz].forEach(input => {
-                input.addEventListener('input', validateForm);
-                // Also validate on blur (when user leaves the field)
-                input.addEventListener('blur', validateForm);
-            });
+                const courseData = {
+                    name: courseName.value.trim(),
+                    daysToComplete: parseInt(daysToComplete.value),
+                    quizzesPerDay: parseInt(quizzesPerDay.value),
+                    questionsPerQuiz: parseInt(questionsPerQuiz.value),
+                    additionalInfo: additionalInput.value.trim(),
+                    progress: 0,
+                    quizzesCompleted: 0,
+                    createdAt: new Date().toISOString()
+                };
 
-            // Add file input validation
-            fileInput.addEventListener('change', validateForm);
-            fileInput.addEventListener('drop', validateForm);
+                try {
+                    const editingIndex = localStorage.getItem('editingCourseIndex');
+                    const coursesStr = localStorage.getItem('coursesInProgress') || '[]';
+                    const courses = JSON.parse(coursesStr);
+
+                    if (editingIndex !== null && editingIndex !== 'null') {
+                        // We're editing an existing course
+                        const index = parseInt(editingIndex);
+                        if (courses[index]) {
+                            courses[index] = {
+                                ...courses[index],
+                                ...courseData,
+                                progress: courses[index].progress,
+                                quizzesCompleted: courses[index].quizzesCompleted,
+                                createdAt: courses[index].createdAt
+                            };
+                        }
+                        localStorage.removeItem('editingCourseIndex');
+                    } else {
+                        // We're creating a new course
+                        courses.push(courseData);
+                    }
+
+                    localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                    updateCoursesInProgress();
+                    hideCourseCreationModal();
+                } catch (error) {
+                    console.error('Error handling course data:', error);
+                }
+            };
 
             // Initial validation
             validateForm();
@@ -1045,38 +1142,6 @@
                     </div>
                 `).join('');
             }
-
-            // Add course creation/update handler
-            createCourseBtn.addEventListener('click', function() {
-                const courseData = {
-                    name: courseName.value.trim(),
-                    daysToComplete: parseInt(daysToComplete.value),
-                    quizzesPerDay: parseInt(quizzesPerDay.value),
-                    questionsPerQuiz: parseInt(questionsPerQuiz.value),
-                    additionalInfo: additionalInput.value.trim(),
-                    files: Array.from(fileInput.files || []).map(f => f.name),
-                    progress: 0,
-                    createdAt: new Date().toISOString()
-                };
-
-                const editingIndex = localStorage.getItem('editingCourseIndex');
-                const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
-
-                if (editingIndex !== null) {
-                    // We're editing an existing course
-                    courseData.progress = courses[editingIndex].progress; // Preserve progress
-                    courseData.createdAt = courses[editingIndex].createdAt; // Preserve creation date
-                    courses[editingIndex] = courseData;
-                    localStorage.removeItem('editingCourseIndex');
-                } else {
-                    // We're creating a new course
-                    courses.push(courseData);
-                }
-
-                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
-                updateCoursesInProgress();
-                hideCourseCreationModal();
-            });
         }
 
         function updateCoursesInProgress() {
@@ -1092,42 +1157,52 @@
                 return;
             }
 
-            coursesContainer.innerHTML = courses.map((course, index) => `
-                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-semibold text-gray-900">${course.name}</h4>
-                        <div class="flex items-center gap-2">
-                            <button onclick="startQuiz(${index})" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Start Quiz
-                            </button>
-                            <button onclick="editCourse(${index})" class="text-gray-500 hover:text-gray-700 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                            </button>
-                            <button onclick="deleteCourse(${index})" class="text-red-500 hover:text-red-700 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+            coursesContainer.innerHTML = courses.map((course, index) => {
+                // Initialize quiz completion count if not exists
+                if (!course.quizzesCompleted) {
+                    course.quizzesCompleted = 0;
+                }
+                
+                // Calculate total required quizzes
+                const totalRequiredQuizzes = course.daysToComplete * course.quizzesPerDay;
+                
+                return `
+                    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold text-gray-900">${course.name}</h4>
+                            <div class="flex items-center gap-2">
+                                <button onclick="startQuiz(${index})" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Start Quiz
+                                </button>
+                                <button onclick="editCourse(${index})" class="text-gray-500 hover:text-gray-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                </button>
+                                <button onclick="deleteCourse(${index})" class="text-red-500 hover:text-red-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${course.progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500">
+                            <span>${course.quizzesCompleted}/${totalRequiredQuizzes} quizzes completed</span>
+                            <span>${course.quizzesPerDay} quizzes/day</span>
                         </div>
                     </div>
-                    <div class="mb-2">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${course.progress}%"></div>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span>${course.quizzesPerDay} quizzes/day</span>
-                        <span>${course.daysToComplete} days to complete</span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function editCourse(index) {
@@ -1229,8 +1304,10 @@
 
                 const data = await response.json();
                 
-                // Store the quiz data
+                // Store the quiz data and ID
                 currentQuiz = data.quiz;
+                currentQuizId = data.quiz_id; // Store the quiz ID
+                currentCourseName = course.name; // Store the course name
                 currentSection = 0;
                 currentQuestion = 0;
                 score = 0;
@@ -1283,7 +1360,7 @@
             // Create radio buttons for each option
             question.options.forEach((option, optionIndex) => {
                 const optionDiv = document.createElement('div');
-                optionDiv.className = 'flex items-center p-3 rounded-lg border border-gray-200 hover:border-purple-500 cursor-pointer transition-colors';
+                optionDiv.className = 'flex items-center p-3 rounded-lg border border-gray-200 hover:border-purple-500 cursor-pointer transition-colors quiz-option';
                 optionDiv.innerHTML = `
                     <input type="radio" name="answer" value="${optionIndex}" class="form-radio h-4 w-4 text-purple-600">
                     <label class="ml-3 text-gray-700">${option}</label>
@@ -1302,6 +1379,7 @@
 
             // Reset submit button
             submitButton.disabled = true;
+            submitButton.innerHTML = 'Submit Answer';
             submitButton.onclick = submitAnswer;
         }
 
@@ -1309,40 +1387,105 @@
             const selectedAnswer = document.querySelector('input[name="answer"]:checked');
             if (!selectedAnswer) return;
 
-            const answerIndex = parseInt(selectedAnswer.value);
+            const selectedIndex = parseInt(selectedAnswer.value);
             const question = currentQuiz[currentQuestion];
+            const isCorrect = selectedIndex === question.correct_answer;
             
-            // Show feedback for the answer
+            // Disable all options after selection
+            const optionElements = document.querySelectorAll('.quiz-option');
+            optionElements.forEach(option => {
+                option.classList.add('cursor-not-allowed');
+                option.classList.remove('hover:bg-gray-100');
+            });
+            
+            // Highlight correct and incorrect answers
             const optionsContainer = document.getElementById('optionsContainer');
             const options = optionsContainer.querySelectorAll('div');
-            
-            // Disable all options after answering
-            options.forEach(option => {
-                option.style.pointerEvents = 'none';
-                const radio = option.querySelector('input');
-                radio.disabled = true;
-            });
-
-            // Highlight correct and incorrect answers
             options.forEach((option, index) => {
                 if (index === question.correct_answer) {
                     option.classList.add('bg-green-100', 'border-green-500');
-                    option.classList.remove('hover:border-purple-500');
-                } else if (index === answerIndex && index !== question.correct_answer) {
+                } else if (index === selectedIndex && !isCorrect) {
                     option.classList.add('bg-red-100', 'border-red-500');
-                    option.classList.remove('hover:border-purple-500');
                 }
             });
-
-            // Update score if correct
-            if (answerIndex === question.correct_answer) {
+            
+            // Update score
+            if (isCorrect) {
                 score++;
             }
-
-            // Wait 2 seconds before moving to next question
+            
+            // Change submit button to loading state
+            const submitButton = document.getElementById('submitAnswerBtn');
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading next question...
+            `;
+            
+            // Wait for 2 seconds before moving to next question
             setTimeout(() => {
                 currentQuestion++;
-                displayQuestion();
+                if (currentQuestion < currentQuiz.length) {
+                    displayQuestion();
+                } else {
+                    // Get course details from localStorage
+                    const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+                    const currentCourse = courses.find(c => c.name === currentCourseName);
+                    
+                    // Quiz is complete, send completion data to server
+                    fetch('/api/complete-quiz', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            correct_answers: score,
+                            course_name: currentCourseName,
+                            quiz_id: currentQuizId,
+                            course_details: currentCourse
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update user stats
+                        document.getElementById('userStars').textContent = data.total_stars;
+                        document.getElementById('shopStars').textContent = data.total_stars;
+                        document.getElementById('streakCount').textContent = data.current_streak;
+                        
+                        // Check if course is completed
+                        if (data.is_course_completed) {
+                            // Move course to completed courses
+                            const completedCourses = JSON.parse(localStorage.getItem('completedCourses') || '[]');
+                            const courseIndex = courses.findIndex(c => c.name === currentCourseName);
+                            
+                            if (courseIndex !== -1) {
+                                const completedCourse = courses[courseIndex];
+                                completedCourse.progress = 100;
+                                completedCourse.completedDate = new Date().toISOString();
+                                completedCourses.push(completedCourse);
+                                courses.splice(courseIndex, 1);
+                                
+                                // Update both lists in localStorage
+                                localStorage.setItem('completedCourses', JSON.stringify(completedCourses));
+                                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                                
+                                // Update both sections in the UI
+                                updateCoursesInProgress();
+                                updateCompletedCourses();
+                            }
+                        }
+                        
+                        // Show completion modal
+                        showCompletionModal();
+                    })
+                    .catch(error => {
+                        console.error('Error completing quiz:', error);
+                        showCompletionModal();
+                    });
+                }
             }, 2000);
         }
 
@@ -1355,11 +1498,59 @@
             
             // Update course progress
             const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
-            const currentCourseIndex = courses.findIndex(c => c.name === currentQuiz[0].topic);
+            const completedCourses = JSON.parse(localStorage.getItem('completedCourses') || '[]');
+            const currentCourseIndex = courses.findIndex(c => c.name === currentCourseName);
+            
             if (currentCourseIndex !== -1) {
-                courses[currentCourseIndex].progress = Math.min(100, courses[currentCourseIndex].progress + (100 / courses[currentCourseIndex].daysToComplete));
-                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
-                updateCoursesInProgress();
+                const currentCourse = courses[currentCourseIndex];
+                
+                // Initialize quiz completion count if not exists
+                if (!currentCourse.quizzesCompleted) {
+                    currentCourse.quizzesCompleted = 0;
+                }
+                
+                // Increment quiz completion count
+                currentCourse.quizzesCompleted++;
+                
+                // Calculate total required quizzes
+                const totalRequiredQuizzes = currentCourse.daysToComplete * currentCourse.quizzesPerDay;
+                
+                // Update progress based on quizzes completed
+                currentCourse.progress = Math.min(100, (currentCourse.quizzesCompleted / totalRequiredQuizzes) * 100);
+                
+                // Check if all required quizzes are completed
+                if (currentCourse.quizzesCompleted >= totalRequiredQuizzes) {
+                    // Double-check if course is already in completed courses
+                    const isAlreadyCompleted = completedCourses.some(c => c.name === currentCourseName);
+                    
+                    if (!isAlreadyCompleted) {
+                        // Move course to completed courses
+                        currentCourse.progress = 100;
+                        currentCourse.completedDate = new Date().toISOString();
+                        currentCourse.totalQuizzesCompleted = currentCourse.quizzesCompleted;
+                        completedCourses.push(currentCourse);
+                        courses.splice(currentCourseIndex, 1);
+                        
+                        // Update both lists in localStorage
+                        localStorage.setItem('completedCourses', JSON.stringify(completedCourses));
+                        localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                        
+                        // Update both sections in the UI
+                        updateCoursesInProgress();
+                        updateCompletedCourses();
+                        
+                        // Show completion celebration
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 }
+                        });
+                    }
+                } else {
+                    // Just update the progress for in-progress courses
+                    localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                    updateCoursesInProgress();
+                }
             }
 
             // Show completion modal with detailed results
@@ -1377,6 +1568,129 @@
                 </div>
             `;
             modal.style.display = 'block';
+        }
+
+        async function updateCompletedCourses() {
+            const completedCoursesContainer = document.getElementById('completedCourses');
+            
+            try {
+                // Fetch completed courses from the database
+                const response = await fetch('/api/completed-courses');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch completed courses');
+                }
+                
+                const completedCourses = await response.json();
+                
+                if (!completedCourses || completedCourses.length === 0) {
+                    completedCoursesContainer.innerHTML = `
+                        <div class="text-center py-8 bg-gray-50 rounded-lg">
+                            <p class="text-gray-500">No completed courses</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                completedCoursesContainer.innerHTML = completedCourses.map((course, index) => `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900">${course.name}</h4>
+                            <div class="flex space-x-2">
+                                <button onclick="showResultsModal('${course.name}')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-full transition-colors font-medium shadow-sm hover:shadow-md">
+                                    Results
+                                </button>
+                                <button onclick="deleteCompletedCourse('${course.name}')" class="text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Progress</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating completed courses:', error);
+                completedCoursesContainer.innerHTML = `
+                    <div class="text-center py-8 bg-gray-50 rounded-lg">
+                        <p class="text-gray-500">Error loading completed courses</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update deleteCompletedCourse function to work with course names instead of indices
+        async function deleteCompletedCourse(courseName) {
+            if (confirm('Are you sure you want to delete this completed course?')) {
+                try {
+                    // Call the backend to delete the course
+                    const response = await fetch('/api/completed-courses', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name: courseName })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to delete course');
+                    }
+
+                    // Refresh the completed courses list
+                    updateCompletedCourses();
+                } catch (error) {
+                    console.error('Error deleting course:', error);
+                    alert('Failed to delete course. Please try again.');
+                }
+            }
+        }
+
+        function showResultsModal(courseName) {
+            const modal = document.getElementById('resultsModal');
+            const courseNameSpan = document.getElementById('resultCourseName');
+            
+            // Show the modal
+            modal.classList.remove('hidden');
+            
+            // Trigger confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // Fetch course results
+            fetch(`/api/completed-courses`)
+                .then(response => response.json())
+                .then(courses => {
+                    const course = courses.find(c => c.name === courseName);
+                    if (course) {
+                        courseNameSpan.textContent = course.name;
+                        document.getElementById('correctAnswers').textContent = `${course.correctAnswers} questions`;
+                        document.getElementById('wrongAnswers').textContent = `${course.wrongAnswers} questions`;
+                        document.getElementById('averageScore').textContent = `${course.averageScore.toFixed(1)}%`;
+                        document.getElementById('completionDate').textContent = new Date(course.completedDate).toLocaleDateString();
+                        document.getElementById('daysToComplete').textContent = `${course.daysToComplete} days`;
+                        document.getElementById('quizzesCompleted').textContent = `${course.quizzesCompleted} / ${course.totalQuizzes} quizzes`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching course results:', error);
+                });
+        }
+
+        function closeResultsModal() {
+            const modal = document.getElementById('resultsModal');
+            modal.classList.add('hidden');
         }
     </script>
 </body>

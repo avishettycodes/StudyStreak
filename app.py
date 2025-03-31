@@ -36,6 +36,8 @@ class Quiz(db.Model):
     score = db.Column(db.Integer, nullable=True)
     course_name = db.Column(db.String(255), nullable=False)
     completed_date = db.Column(db.Date, nullable=True)
+    total_questions = db.Column(db.Integer, nullable=True)
+    user_answers = db.Column(db.JSON, nullable=True)
 
 class UserStats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -74,6 +76,16 @@ class UserStats(db.Model):
             10: 300  # 300 quizzes for max level
         }
         return level_requirements.get(self.current_level, 300)
+
+class CompletedCourse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    course_name = db.Column(db.String(255), nullable=False)
+    completion_date = db.Column(db.DateTime, nullable=False)
+    total_score = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False)
+    days_to_complete = db.Column(db.Integer, nullable=False)
+    quizzes_completed = db.Column(db.Integer, nullable=False)
+    quizzes_per_day = db.Column(db.Integer, nullable=False)
 
 @app.route('/')
 def index():
@@ -142,6 +154,13 @@ def generate_quiz():
                     if not isinstance(question['correct_answer'], int) or question['correct_answer'] < 0 or question['correct_answer'] >= len(question['options']):
                         raise ValueError(f"Invalid correct_answer index: {question['correct_answer']}")
                 
+                # Add course details to the first question
+                quiz_data['questions'][0]['course_details'] = {
+                    'daysToComplete': days_to_complete,
+                    'quizzesPerDay': quizzes_per_day,
+                    'questionsPerQuiz': questions_per_quiz
+                }
+                
                 # Create quiz in database
                 quiz = Quiz(
                     questions=quiz_data['questions'],
@@ -194,10 +213,65 @@ def complete_quiz():
     elif request.method == 'POST':
         try:
             data = request.get_json()
-            correct_answers = data.get('correct_answers', 0)
+            quiz_id = data.get('quiz_id')
+            user_answers = data.get('answers', [])
+            score = data.get('score', 0)
+            total_questions = data.get('totalQuestions', 0)
             
-            # Calculate stars earned (10 stars per quiz)
-            stars_earned = 10
+            if not quiz_id:
+                return jsonify({'error': 'Quiz ID is required'}), 400
+            
+            quiz = Quiz.query.get(quiz_id)
+            if not quiz:
+                return jsonify({'error': 'Quiz not found'}), 404
+            
+            # Get course details from the first question
+            course_details = quiz.questions[0].get('course_details', {})
+            days_to_complete = course_details.get('daysToComplete', 1)
+            quizzes_per_day = course_details.get('quizzesPerDay', 1)
+            questions_per_quiz = course_details.get('questionsPerQuiz', 10)
+            total_required_quizzes = days_to_complete * quizzes_per_day
+            
+            # Update quiz with completion data
+            quiz.completed = True
+            quiz.score = score
+            quiz.total_questions = total_questions
+            quiz.user_answers = user_answers
+            quiz.completed_date = datetime.utcnow()
+            
+            # Get all completed quizzes for this course
+            completed_quizzes = Quiz.query.filter_by(
+                course_name=quiz.course_name,
+                completed=True
+            ).all()
+            
+            total_completed = len(completed_quizzes)
+            total_score = sum(q.score for q in completed_quizzes)
+            total_questions_answered = sum(q.total_questions for q in completed_quizzes)
+            
+            # Check if course already exists in CompletedCourse
+            existing_completed_course = CompletedCourse.query.filter_by(
+                course_name=quiz.course_name
+            ).first()
+            
+            # Calculate course completion
+            if total_completed >= total_required_quizzes and not existing_completed_course:
+                print(f"Creating completed course entry for {quiz.course_name}")
+                print(f"Total completed: {total_completed}, Required: {total_required_quizzes}")
+                print(f"Total score: {total_score}, Total questions: {total_questions_answered}")
+                
+                # Create CompletedCourse entry
+                completed_course = CompletedCourse(
+                    course_name=quiz.course_name,
+                    completion_date=datetime.utcnow(),
+                    total_score=total_score,
+                    total_questions=total_questions_answered,
+                    days_to_complete=days_to_complete,
+                    quizzes_completed=total_completed,
+                    quizzes_per_day=quizzes_per_day
+                )
+                db.session.add(completed_course)
+                print(f"Added completed course to session: {completed_course.course_name}")
             
             # Get user stats
             user_stats = UserStats.query.first()
@@ -207,7 +281,7 @@ def complete_quiz():
             
             # Update user stats
             user_stats.quizzes_completed += 1
-            user_stats.total_stars += stars_earned
+            user_stats.total_stars += score
             
             # Update streak
             current_date = datetime.utcnow()
@@ -231,47 +305,96 @@ def complete_quiz():
             
             # Check for level up
             next_level_requirement = user_stats.get_next_level_requirement()
-            
             if user_stats.quizzes_completed >= next_level_requirement and user_stats.current_level < 10:
                 user_stats.current_level += 1
             
-            # Save changes
-            db.session.commit()
+            try:
+                # Save changes
+                db.session.commit()
+                print(f"Successfully committed changes to database")
+            except Exception as commit_error:
+                print(f"Error committing to database: {str(commit_error)}")
+                db.session.rollback()
+                raise commit_error
             
             return jsonify({
-                'current_level': user_stats.current_level,
-                'level_name': user_stats.get_level_name(),
-                'quizzes_completed': user_stats.quizzes_completed,
-                'next_level_requirement': user_stats.get_next_level_requirement(),
-                'total_stars': user_stats.total_stars,
-                'current_streak': user_stats.current_streak
-            })
+                'message': 'Quiz completed successfully',
+                'score': score,
+                'totalQuestions': total_questions
+            }), 200
+            
         except Exception as e:
             db.session.rollback()
-            print(f"Error in complete_quiz: {str(e)}")
+            print(f"Error completing quiz: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
 @app.route('/quiz')
 def quiz():
     return render_template('quiz.html')
 
+@app.route('/api/completed-courses', methods=['GET', 'DELETE'])
+def get_completed_courses():
+    try:
+        if request.method == 'DELETE':
+            data = request.get_json()
+            course_name = data.get('name')
+            if not course_name:
+                return jsonify({'error': 'Course name is required'}), 400
+
+            # Delete completed course and all its quizzes
+            CompletedCourse.query.filter_by(course_name=course_name).delete()
+            Quiz.query.filter_by(course_name=course_name).delete()
+            db.session.commit()
+            return jsonify({'message': 'Course deleted successfully'})
+
+        # Handle GET request
+        completed_courses = CompletedCourse.query.all()
+        print(f"Found {len(completed_courses)} completed courses")
+        
+        courses_data = []
+        for course in completed_courses:
+            # Calculate statistics
+            correct_answers = course.total_score
+            total_questions = course.total_questions
+            wrong_answers = total_questions - correct_answers
+            average_score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+            
+            course_data = {
+                'name': course.course_name,
+                'totalQuizzes': course.quizzes_completed,
+                'correctAnswers': correct_answers,
+                'wrongAnswers': wrong_answers,
+                'averageScore': average_score,
+                'completedDate': course.completion_date.isoformat(),
+                'daysToComplete': course.days_to_complete,
+                'quizzesCompleted': course.quizzes_completed
+            }
+            courses_data.append(course_data)
+            print(f"Added completed course: {course.course_name} with stats: {course_data}")
+        
+        return jsonify(courses_data)
+    except Exception as e:
+        print(f"Error handling completed courses: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 # Initialize database
 with app.app_context():
-    # Drop all tables first
-    db.drop_all()
-    # Create all tables
+    # Create tables if they don't exist
     db.create_all()
     
-    # Create default user stats
-    default_stats = UserStats(
-        quizzes_completed=0,
-        total_stars=0,
-        current_level=1,
-        current_streak=0,
-        last_quiz_date=None
-    )
-    db.session.add(default_stats)
-    db.session.commit()
+    # Check if default user stats exist
+    if not UserStats.query.first():
+        # Create default user stats
+        default_stats = UserStats(
+            quizzes_completed=0,
+            total_stars=0,
+            current_level=1,
+            current_streak=0,
+            last_quiz_date=None
+        )
+        db.session.add(default_stats)
+        db.session.commit()
+        print("Created default user stats")
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=4444, debug=True) 

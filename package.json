@@ -1,0 +1,16 @@
+{
+  "name": "studystreak",
+  "version": "1.0.0",
+  "description": "StudyStreak is an innovative learning platform that helps students master their subjects through AI-generated quizzes and personalized learning paths. The platform features a gamified learning experience with streaks, levels, and rewards to keep students motivated.",
+  "main": "test_course_creation.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}

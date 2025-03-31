@@ -521,30 +521,100 @@
             </div>
         </div>
 
+        <!-- Course Creation Modal -->
+        <div id="courseCreationModal" class="modal">
+            <div class="modal-content max-w-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold">Create Your Course</h3>
+                    <button onclick="hideCourseCreationModal()" class="text-gray-500">✕</button>
+                </div>
+                <div class="space-y-4">
+                    <!-- Course Name -->
+                    <div>
+                        <label for="courseName" class="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
+                        <input type="text" id="courseName" class="input-field" placeholder="Enter course name" required>
+                    </div>
+
+                    <!-- Days to Complete -->
+                    <div>
+                        <label for="daysToComplete" class="block text-sm font-medium text-gray-700 mb-1">Days to Complete</label>
+                        <input type="number" id="daysToComplete" class="input-field" min="1" max="365" placeholder="Enter number of days (max 365)" required>
+                    </div>
+
+                    <!-- Quizzes per Day -->
+                    <div>
+                        <label for="quizzesPerDay" class="block text-sm font-medium text-gray-700 mb-1">Quizzes per Day</label>
+                        <input type="number" id="quizzesPerDay" class="input-field" min="1" max="5" placeholder="Enter quizzes per day (max 5)" required>
+                    </div>
+
+                    <!-- Questions per Quiz -->
+                    <div>
+                        <label for="questionsPerQuiz" class="block text-sm font-medium text-gray-700 mb-1">Questions per Quiz</label>
+                        <input type="number" id="questionsPerQuiz" class="input-field" min="1" max="50" placeholder="Enter questions per quiz (max 50)" required>
+                    </div>
+
+                    <!-- Additional Input -->
+                    <div>
+                        <label for="additionalInput" class="block text-sm font-medium text-gray-700 mb-1">Additional Input (Optional)</label>
+                        <textarea id="additionalInput" class="input-field" rows="3" maxlength="500" placeholder="Any additional information or requirements (max 500 characters)"></textarea>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <span id="charCount">0</span>/500 characters
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Files</label>
+                        <div class="upload-container p-4 rounded-lg cursor-pointer">
+                            <input type="file" id="courseFiles" class="hidden" multiple accept=".txt,.pdf,.docx">
+                            <div class="text-center">
+                                <div class="mb-2">📄</div>
+                                <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                                <p class="text-xs text-gray-500 mt-1">Supports: PDF, DOCX, TXT</p>
+                            </div>
+                        </div>
+                        <div id="uploadedFilesList" class="mt-2 text-sm text-gray-600"></div>
+                    </div>
+
+                    <!-- Create Course Button -->
+                    <button id="createCourseBtn" class="btn-primary w-full mt-6" disabled>
+                        Create Course
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content -->
         <main class="main-content">
             <!-- Welcome Screen -->
             <div id="welcomeSection" class="px-4 py-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Learn Smarter</h2>
                 <div class="max-w-md mx-auto">
-                    <div class="border-2 border-dashed border-purple-400 rounded-2xl p-8 mb-4 text-center bg-white cursor-pointer upload-container" onclick="document.getElementById('mainFileInput').click()">
-                        <div class="mb-4">
-                            <svg class="w-12 h-12 mx-auto text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                            </svg>
+                    <div class="flex flex-col items-center justify-center p-6">
+                        <button onclick="showCourseCreationModal()" class="btn-primary w-full">Create Your Own Course</button>
+                    </div>
+
+                    <!-- Courses in Progress -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Courses in Progress</h3>
+                        <div class="space-y-4" id="coursesInProgress">
+                            <!-- Empty state -->
+                            <div class="text-center py-8 bg-gray-50 rounded-lg">
+                                <p class="text-gray-500">No courses in progress</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Your Study Material</h3>
-                        <p class="text-sm text-gray-600 mb-4">Our AI will analyze your content and create personalized quizzes</p>
-                        <p class="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
-                        <p class="text-xs text-gray-500">TXT, PDF, or DOCX files</p>
-                        <input type="file" id="mainFileInput" class="hidden" accept=".txt,.pdf,.docx" multiple onchange="handleMainFileSelect(event)">
                     </div>
-                    <div id="uploadedFiles" class="mb-4 space-y-2">
-                        <!-- Uploaded files will appear here -->
+
+                    <!-- Completed Courses -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Completed Courses</h3>
+                        <div class="space-y-4" id="completedCourses">
+                            <!-- Empty state -->
+                            <div class="text-center py-8 bg-gray-50 rounded-lg">
+                                <p class="text-gray-500">No completed courses</p>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="generateQuiz()" class="btn-primary w-full bg-purple-600 hover:bg-purple-700 opacity-50 cursor-not-allowed" id="generateQuizBtn" disabled>
-                        Generate Quiz
-                    </button>
                 </div>
             </div>
 
@@ -597,167 +667,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmationModal" class="modal">
+            <div class="modal-content max-w-xs">
+                <div class="text-center p-4">
+                    <div class="text-4xl mb-4">🗑️</div>
+                    <h3 class="text-xl font-semibold mb-4">Delete Course</h3>
+                    <p class="text-gray-600 mb-6">Are you sure you want to delete this course? This action cannot be undone.</p>
+                    <div class="flex flex-col gap-3">
+                        <button id="confirmDeleteBtn" class="btn-primary bg-red-500 hover:bg-red-600">
+                            Delete Course
+                        </button>
+                        <button onclick="hideDeleteConfirmationModal()" class="px-6 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        let uploadedFiles = [];
+        let currentQuiz = null;
+        let currentSection = 0;
+        let currentQuestion = 0;
+        let score = 0;
+        let isQuizComplete = false;
 
-        // Make the upload container clickable and handle drag-drop
-        const mainUploadContainer = document.querySelector('.upload-container');
-        const generateQuizBtn = document.getElementById('generateQuizBtn');
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            mainUploadContainer.addEventListener(eventName, preventDefaults, false);
-        });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            mainUploadContainer.addEventListener(eventName, () => {
-                mainUploadContainer.style.borderColor = '#7c3aed';
-                mainUploadContainer.style.backgroundColor = '#f5f3ff';
-            });
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            mainUploadContainer.addEventListener(eventName, () => {
-                mainUploadContainer.style.borderColor = '#e5e7eb';
-                mainUploadContainer.style.backgroundColor = '#ffffff';
-            });
-        });
-
-        mainUploadContainer.addEventListener('drop', handleMainDrop, false);
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        function handleMainDrop(e) {
-            const dt = e.dataTransfer;
-            const files = Array.from(dt.files).filter(file => 
-                file.name.endsWith('.txt') || 
-                file.name.endsWith('.pdf') || 
-                file.name.endsWith('.docx')
-            );
+        function showHomeScreen() {
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.classList.add('hidden');
             
-            if (files.length > 0) {
-                handleMainFileSelect({ target: { files: dt.files } });
-            }
+            // Show welcome section
+            const welcomeSection = document.getElementById('welcomeSection');
+            welcomeSection.style.display = 'block';
         }
 
-        async function loadUploadedFiles() {
-            try {
-                const response = await fetch('/api/files');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch files');
-                }
-                const data = await response.json();
-                updateFileList(data.files);
-            } catch (error) {
-                console.error('Error loading files:', error);
-            }
-        }
-
-        function updateFileList(files) {
-            const fileList = document.getElementById('uploadedFiles');
-            if (files.length === 0) {
-                fileList.innerHTML = '<p class="text-gray-500 text-center">No files uploaded yet</p>';
-                document.getElementById('generateQuizBtn').disabled = true;
-                document.getElementById('generateQuizBtn').classList.add('opacity-50', 'cursor-not-allowed');
-                return;
-            }
-
-            fileList.innerHTML = files.map(file => `
-                <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                    <div class="flex items-center">
-                        <span class="text-2xl mr-3">📄</span>
-                        <div>
-                            <p class="font-medium text-gray-900">${file.filename}</p>
-                            <p class="text-sm text-gray-500">${new Date(file.created_at).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <button onclick="removeFile(${file.id})" class="text-red-500 hover:text-red-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
-
-            document.getElementById('generateQuizBtn').disabled = false;
-            document.getElementById('generateQuizBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-
-        async function removeFile(fileId) {
-            try {
-                const response = await fetch(`/api/files/${fileId}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to delete file');
-                }
-
-                await loadUploadedFiles();
-            } catch (error) {
-                console.error('Error removing file:', error);
-                alert('Failed to remove file. Please try again.');
-            }
-        }
-
-        async function handleMainFileSelect(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                try {
-                    // Show loading state
-                    const generateQuizBtn = document.getElementById('generateQuizBtn');
-                    generateQuizBtn.disabled = true;
-                    generateQuizBtn.textContent = 'Uploading...';
-                    generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    
-                    const formData = new FormData();
-                    for (let file of files) {
-                        if (!file.name.match(/\.(txt|pdf|docx)$/i)) {
-                            throw new Error(`Invalid file type: ${file.name}. Only TXT, PDF, and DOCX files are allowed.`);
-                        }
-                        formData.append('file', file);
-                    }
-                    
-                    const uploadResponse = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const responseData = await uploadResponse.json();
-                    
-                    if (!uploadResponse.ok) {
-                        throw new Error(responseData.error || 'Upload failed');
-                    }
-                    
-                    // Refresh the file list
-                    await loadUploadedFiles();
-                    
-                    // Reset file input
-                    event.target.value = '';
-                    
-                    // Reset button state to enabled
-                    generateQuizBtn.disabled = false;
-                    generateQuizBtn.textContent = 'Generate Quiz';
-                    generateQuizBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    
-                    // Show success message
-                    alert('Files uploaded successfully! Click "Generate Quiz" to create a quiz.');
-                } catch (error) {
-                    console.error('Error uploading files:', error);
-                    alert(error.message || 'Failed to upload files. Please try again.');
-                    
-                    // Reset button state to disabled
-                    const generateQuizBtn = document.getElementById('generateQuizBtn');
-                    generateQuizBtn.disabled = true;
-                    generateQuizBtn.textContent = 'Generate Quiz';
-                    generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                }
-            }
-        }
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            showHomeScreen();
+            loadUserStats();
+            updateCoursesInProgress();
+        });
 
         // Add level titles
         const levelTitles = {
@@ -770,284 +722,6 @@
             7: "Study Legend",
             8: "Learning Sage"
         };
-
-        async function generateQuiz() {
-            try {
-                const generateQuizBtn = document.getElementById('generateQuizBtn');
-                generateQuizBtn.disabled = true;
-                generateQuizBtn.textContent = 'Generating Quiz...';
-
-                const response = await fetch('/api/generate-quiz', {
-                    method: 'POST'
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to generate quiz');
-                }
-
-                const data = await response.json();
-                if (data.quiz) {
-                    // Parse the quiz data if it's a string
-                    const quizData = typeof data.quiz === 'string' ? JSON.parse(data.quiz) : data.quiz;
-                    
-                    // Hide welcome section and show quiz container
-                    document.getElementById('welcomeSection').style.display = 'none';
-                    const quizContainer = document.getElementById('quizContainer');
-                    quizContainer.classList.remove('hidden');
-                    
-                    // Initialize quiz data
-                    window.quizData = quizData;
-                    window.currentQuizId = data.quiz_id;
-                    window.currentQuestionIndex = 0;
-                    window.correctAnswers = 0;
-                    
-                    // Display the first question
-                    displayQuestion(0);
-                }
-
-                // Reset button state
-                generateQuizBtn.disabled = false;
-                generateQuizBtn.textContent = 'Generate Quiz';
-            } catch (error) {
-                console.error('Error generating quiz:', error);
-                alert(error.message || 'Failed to generate quiz. Please try again.');
-                
-                // Reset button state
-                const generateQuizBtn = document.getElementById('generateQuizBtn');
-                generateQuizBtn.disabled = false;
-                generateQuizBtn.textContent = 'Generate Quiz';
-            }
-        }
-
-        function displayQuestion(index) {
-            const question = window.quizData[index];
-            const questionText = document.getElementById('questionText');
-            const optionsContainer = document.getElementById('optionsContainer');
-            const questionProgress = document.getElementById('questionProgress');
-            const questionCount = document.getElementById('questionCount');
-            const submitButton = document.getElementById('submitAnswerBtn');
-            
-            // Update question text
-            questionText.textContent = `${index + 1}. ${question.question}`;
-            
-            // Update progress indicators
-            questionProgress.textContent = `Question ${index + 1} of ${window.quizData.length}`;
-            questionCount.textContent = `Correct: ${window.correctAnswers}`;
-            
-            // Clear previous options and feedback
-            optionsContainer.innerHTML = '';
-            const existingFeedback = document.querySelector('.feedback-message');
-            if (existingFeedback) {
-                existingFeedback.remove();
-            }
-            
-            // Reset submit button
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submit Answer';
-            
-            // Add new options
-            question.options.forEach((option, optIndex) => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center space-x-2 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors';
-                label.innerHTML = `
-                    <input type="radio" name="q${index}" value="${optIndex}" class="form-radio">
-                    <span>${option}</span>
-                `;
-                
-                // Add click handler for the option
-                label.addEventListener('click', () => {
-                    // Enable submit button when an option is selected
-                    submitButton.disabled = false;
-                });
-                
-                optionsContainer.appendChild(label);
-            });
-            
-            // Add submit button handler
-            submitButton.onclick = () => handleAnswer(index);
-        }
-
-        async function handleAnswer(questionIndex) {
-            const question = window.quizData[questionIndex];
-            const selectedInput = document.querySelector(`input[name="q${questionIndex}"]:checked`);
-            const submitButton = document.getElementById('submitAnswerBtn');
-            
-            if (!selectedInput) return;
-            
-            const selectedAnswer = parseInt(selectedInput.value);
-            const isCorrect = selectedAnswer === question.correct_answer;
-            
-            // Immediately disable submit button
-            submitButton.disabled = true;
-            
-            // Remove any existing feedback
-            const existingFeedback = document.querySelector('.feedback-message');
-            if (existingFeedback) {
-                existingFeedback.remove();
-            }
-            
-            // Show feedback immediately
-            const feedback = document.createElement('div');
-            feedback.className = `mt-4 p-4 rounded-lg feedback-message ${
-                isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`;
-            feedback.textContent = isCorrect ? 
-                'Correct! Well done! 🎉' : 
-                'Incorrect. Try again!';
-            
-            // Insert feedback after options
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.appendChild(feedback);
-            
-            if (isCorrect) {
-                window.correctAnswers++;
-                // Wait a moment before moving to next question
-                setTimeout(() => {
-                    if (questionIndex < window.quizData.length - 1) {
-                        window.currentQuestionIndex++;
-                        displayQuestion(window.currentQuestionIndex);
-                    } else {
-                        // Quiz completed
-                        submitQuiz();
-                    }
-                }, 1500);
-            } else {
-                // Re-enable submit button for retry after a shorter delay
-                setTimeout(() => {
-                    submitButton.disabled = false;
-                }, 800);
-            }
-        }
-
-        async function submitQuiz() {
-            try {
-                const response = await fetch('/api/complete-quiz', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        correct_answers: window.correctAnswers
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to submit quiz');
-                }
-                
-                // Update user stats immediately
-                document.getElementById('userLevel').textContent = levelTitles[data.current_level];
-                document.getElementById('userStars').textContent = data.total_stars;
-                document.getElementById('shopStars').textContent = data.total_stars;
-                document.getElementById('streakCount').textContent = data.current_streak;
-                
-                // Update level modal displays
-                document.getElementById('currentLevel').textContent = data.current_level;
-                document.getElementById('quizzesCompleted').textContent = data.quizzes_completed;
-                
-                // Update next level information
-                const nextLevel = data.current_level + 1;
-                const nextLevelTitle = levelTitles[nextLevel] || 'Max Level';
-                document.getElementById('nextLevelTitle').textContent = `${nextLevelTitle} (Level ${nextLevel})`;
-                
-                // Calculate and update progress bar
-                const progressInLevel = data.quizzes_completed;
-                const nextRequirement = data.next_level_requirement;
-                const percentage = Math.min((progressInLevel / nextRequirement) * 100, 100);
-                
-                // Update progress bar
-                document.getElementById('levelProgressBar').style.width = `${percentage}%`;
-                
-                // Update quizzes remaining text
-                const quizzesRemaining = data.next_level_requirement - data.quizzes_completed;
-                document.getElementById('quizzesRemaining').textContent = 
-                    `Complete ${quizzesRemaining} more ${quizzesRemaining === 1 ? 'quiz' : 'quizzes'}`;
-                    
-                // Update progress ring
-                const progressRing = document.getElementById('levelProgress');
-                const circumference = 326.7256359733385; // 2 * π * r
-                const offset = circumference - (percentage / 100) * circumference;
-                progressRing.style.strokeDashoffset = offset;
-                
-                // Show completion modal
-                const modal = document.getElementById('completionModal');
-                const modalContent = document.getElementById('completionModalContent');
-                
-                if (data.current_level > parseInt(document.getElementById('currentLevel').textContent)) {
-                    modalContent.innerHTML = `
-                        <div class="text-center">
-                            <div class="text-6xl mb-4">🎉</div>
-                            <h2 class="text-2xl font-bold mb-4">Level Up!</h2>
-                            <p class="mb-4">You've reached level ${data.current_level}!</p>
-                            <p class="mb-4">Stars earned: ${data.total_stars}</p>
-                            <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                                Continue Learning
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    modalContent.innerHTML = `
-                        <div class="text-center">
-                            <div class="text-6xl mb-4">🌟</div>
-                            <h2 class="text-2xl font-bold mb-4">Quiz Completed!</h2>
-                            <p class="mb-4">Stars earned: ${data.total_stars}</p>
-                            <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                                Continue Learning
-                            </button>
-                        </div>
-                    `;
-                }
-                
-                modal.style.display = 'block';
-            } catch (error) {
-                console.error('Error submitting quiz:', error);
-                // Show error in a modal instead of alert
-                const modal = document.getElementById('completionModal');
-                const modalContent = document.getElementById('completionModalContent');
-                modalContent.innerHTML = `
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">⚠️</div>
-                        <h2 class="text-2xl font-bold mb-4">Oops!</h2>
-                        <p class="mb-4">There was an error submitting your quiz.</p>
-                        <p class="mb-4 text-sm text-gray-600">${error.message}</p>
-                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                            Return to Main
-                        </button>
-                    </div>
-                `;
-                modal.style.display = 'block';
-            }
-        }
-
-        function returnToMain() {
-            // Hide all modals
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
-            
-            // Show welcome section
-            const welcomeSection = document.getElementById('welcomeSection');
-            welcomeSection.style.display = 'block';
-            
-            // Hide quiz container
-            const quizContainer = document.getElementById('quizContainer');
-            quizContainer.classList.add('hidden');
-            
-            // Reset generate quiz button
-            const generateQuizBtn = document.getElementById('generateQuizBtn');
-            generateQuizBtn.disabled = true;
-            generateQuizBtn.textContent = 'Generate Quiz';
-            generateQuizBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            
-            // Clear uploaded files
-            document.getElementById('uploadedFiles').innerHTML = '<p class="text-gray-500 text-center">No files uploaded yet</p>';
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
 
         // Update modal click handlers
         document.addEventListener('DOMContentLoaded', function() {
@@ -1062,9 +736,6 @@
                     }
                 });
             });
-
-            // Load initial user stats
-            loadUserStats();
         });
 
         // Settings Modal Functions
@@ -1162,24 +833,17 @@
             modal.style.display = 'block';
         }
 
-        function returnToHome() {
+        function returnToMain() {
             // Hide all modals
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.style.display = 'none';
-                setTimeout(() => modal.remove(), 300);
             });
             
             // Show welcome section
-            document.getElementById('welcomeSection').scrollIntoView({ behavior: 'smooth' });
+            showHomeScreen();
             
-            // Highlight the upload container
-            const uploadContainer = document.querySelector('.upload-container');
-            uploadContainer.style.borderColor = '#7c3aed';
-            uploadContainer.style.backgroundColor = '#f5f3ff';
-            setTimeout(() => {
-                uploadContainer.style.borderColor = '';
-                uploadContainer.style.backgroundColor = '';
-            }, 2000);
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // Add function to load user stats
@@ -1231,6 +895,488 @@
             } catch (error) {
                 console.error('Error loading user stats:', error);
             }
+        }
+
+        // Course Creation Modal Functions
+        function showCourseCreationModal() {
+            document.getElementById('courseCreationModal').style.display = 'block';
+            setupCourseCreationForm();
+        }
+
+        function hideCourseCreationModal() {
+            document.getElementById('courseCreationModal').style.display = 'none';
+            // Reset form
+            document.getElementById('courseName').value = '';
+            document.getElementById('daysToComplete').value = '';
+            document.getElementById('quizzesPerDay').value = '';
+            document.getElementById('questionsPerQuiz').value = '';
+            document.getElementById('additionalInput').value = '';
+            document.getElementById('courseFiles').value = '';
+            document.getElementById('uploadedFilesList').innerHTML = '';
+            document.getElementById('createCourseBtn').disabled = true;
+            localStorage.removeItem('editingCourseIndex'); // Clear editing state
+        }
+
+        function setupCourseCreationForm() {
+            const courseName = document.getElementById('courseName');
+            const daysToComplete = document.getElementById('daysToComplete');
+            const quizzesPerDay = document.getElementById('quizzesPerDay');
+            const questionsPerQuiz = document.getElementById('questionsPerQuiz');
+            const additionalInput = document.getElementById('additionalInput');
+            const charCount = document.getElementById('charCount');
+            const createCourseBtn = document.getElementById('createCourseBtn');
+            const uploadContainer = document.querySelector('.upload-container');
+            const fileInput = document.getElementById('courseFiles');
+            const uploadedFilesList = document.getElementById('uploadedFilesList');
+
+            // Handle number input limits
+            daysToComplete.addEventListener('input', function() {
+                let value = parseInt(this.value);
+                if (value > 365) {
+                    this.value = 365;
+                }
+            });
+
+            quizzesPerDay.addEventListener('input', function() {
+                let value = parseInt(this.value);
+                if (value > 5) {
+                    this.value = 5;
+                }
+            });
+
+            questionsPerQuiz.addEventListener('input', function() {
+                let value = parseInt(this.value);
+                if (value > 50) {
+                    this.value = 50;
+                }
+            });
+
+            // Handle character count for additional input
+            additionalInput.addEventListener('input', function() {
+                if (this.value.length > 500) {
+                    this.value = this.value.substring(0, 500);
+                }
+                charCount.textContent = this.value.length;
+            });
+
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                const files = Array.from(this.files);
+                updateFilesList(files);
+            });
+
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            uploadContainer.addEventListener('click', () => fileInput.click());
+
+            // Validate required fields
+            function validateForm() {
+                const isValid = courseName.value.trim() !== '' &&
+                              daysToComplete.value.trim() !== '' &&
+                              quizzesPerDay.value.trim() !== '' &&
+                              questionsPerQuiz.value.trim() !== '' &&
+                              parseInt(daysToComplete.value) > 0 &&
+                              parseInt(daysToComplete.value) <= 365 &&
+                              parseInt(quizzesPerDay.value) > 0 &&
+                              parseInt(quizzesPerDay.value) <= 5 &&
+                              parseInt(questionsPerQuiz.value) > 0 &&
+                              parseInt(questionsPerQuiz.value) <= 50 &&
+                              fileInput.files.length > 0;
+                createCourseBtn.disabled = !isValid;
+            }
+
+            // Add input event listeners for all required fields
+            [courseName, daysToComplete, quizzesPerDay, questionsPerQuiz].forEach(input => {
+                input.addEventListener('input', validateForm);
+                // Also validate on blur (when user leaves the field)
+                input.addEventListener('blur', validateForm);
+            });
+
+            // Add file input validation
+            fileInput.addEventListener('change', validateForm);
+            fileInput.addEventListener('drop', validateForm);
+
+            // Initial validation
+            validateForm();
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight(e) {
+                uploadContainer.classList.add('border-purple-500', 'bg-purple-50');
+            }
+
+            function unhighlight(e) {
+                uploadContainer.classList.remove('border-purple-500', 'bg-purple-50');
+            }
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = Array.from(dt.files).filter(file => {
+                    return file.name.match(/\.(txt|pdf|docx)$/i);
+                });
+                
+                if (files.length > 0) {
+                    fileInput.files = dt.files;
+                    updateFilesList(files);
+                }
+                unhighlight(e);
+            }
+
+            function updateFilesList(files) {
+                uploadedFilesList.innerHTML = files.map(file => `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs">📄</span>
+                        <span class="text-sm truncate">${file.name}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Add course creation/update handler
+            createCourseBtn.addEventListener('click', function() {
+                const courseData = {
+                    name: courseName.value.trim(),
+                    daysToComplete: parseInt(daysToComplete.value),
+                    quizzesPerDay: parseInt(quizzesPerDay.value),
+                    questionsPerQuiz: parseInt(questionsPerQuiz.value),
+                    additionalInfo: additionalInput.value.trim(),
+                    files: Array.from(fileInput.files || []).map(f => f.name),
+                    progress: 0,
+                    createdAt: new Date().toISOString()
+                };
+
+                const editingIndex = localStorage.getItem('editingCourseIndex');
+                const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+
+                if (editingIndex !== null) {
+                    // We're editing an existing course
+                    courseData.progress = courses[editingIndex].progress; // Preserve progress
+                    courseData.createdAt = courses[editingIndex].createdAt; // Preserve creation date
+                    courses[editingIndex] = courseData;
+                    localStorage.removeItem('editingCourseIndex');
+                } else {
+                    // We're creating a new course
+                    courses.push(courseData);
+                }
+
+                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                updateCoursesInProgress();
+                hideCourseCreationModal();
+            });
+        }
+
+        function updateCoursesInProgress() {
+            const coursesContainer = document.getElementById('coursesInProgress');
+            const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+
+            if (courses.length === 0) {
+                coursesContainer.innerHTML = `
+                    <div class="text-center py-8 bg-gray-50 rounded-lg">
+                        <p class="text-gray-500">No courses in progress</p>
+                    </div>
+                `;
+                return;
+            }
+
+            coursesContainer.innerHTML = courses.map((course, index) => `
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-semibold text-gray-900">${course.name}</h4>
+                        <div class="flex items-center gap-2">
+                            <button onclick="startQuiz(${index})" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Start Quiz
+                            </button>
+                            <button onclick="editCourse(${index})" class="text-gray-500 hover:text-gray-700 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteCourse(${index})" class="text-red-500 hover:text-red-700 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${course.progress}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>${course.quizzesPerDay} quizzes/day</span>
+                        <span>${course.daysToComplete} days to complete</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editCourse(index) {
+            const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+            const course = courses[index];
+            
+            // Store the index being edited
+            localStorage.setItem('editingCourseIndex', index);
+            
+            // Populate form with course data
+            document.getElementById('courseName').value = course.name;
+            document.getElementById('daysToComplete').value = course.daysToComplete;
+            document.getElementById('quizzesPerDay').value = course.quizzesPerDay;
+            document.getElementById('questionsPerQuiz').value = course.questionsPerQuiz;
+            document.getElementById('additionalInput').value = course.additionalInfo || '';
+            document.getElementById('charCount').textContent = (course.additionalInfo || '').length;
+            
+            // Show the modal for editing
+            showCourseCreationModal();
+        }
+
+        function deleteCourse(index) {
+            // Store the index to delete
+            localStorage.setItem('deletingCourseIndex', index);
+            
+            // Show delete confirmation modal
+            const modal = document.getElementById('deleteConfirmationModal');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            // Update confirm button click handler
+            confirmBtn.onclick = confirmDelete;
+            
+            // Show the modal
+            modal.style.display = 'block';
+        }
+
+        function hideDeleteConfirmationModal() {
+            document.getElementById('deleteConfirmationModal').style.display = 'none';
+            localStorage.removeItem('deletingCourseIndex');
+        }
+
+        function confirmDelete() {
+            const index = localStorage.getItem('deletingCourseIndex');
+            if (index !== null) {
+                const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+                courses.splice(index, 1);
+                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                updateCoursesInProgress();
+            }
+            hideDeleteConfirmationModal();
+        }
+
+        // Add modal click handler for delete confirmation
+        document.getElementById('deleteConfirmationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideDeleteConfirmationModal();
+            }
+        });
+
+        async function startQuiz(index) {
+            // Get the button that was clicked
+            const button = event.currentTarget;
+            
+            // Disable the button and show loading state
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Starting Quiz...
+            `;
+
+            try {
+                const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+                const course = courses[index];
+                
+                // Prepare the request data
+                const requestData = {
+                    topic: course.name,
+                    daysToComplete: course.daysToComplete,
+                    quizzesPerDay: course.quizzesPerDay,
+                    questionsPerDay: course.questionsPerQuiz,
+                    additionalInfo: course.additionalInfo
+                };
+
+                // Call the API to generate quiz
+                const response = await fetch('/api/generate-quiz', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate quiz');
+                }
+
+                const data = await response.json();
+                
+                // Store the quiz data
+                currentQuiz = data.quiz;
+                currentSection = 0;
+                currentQuestion = 0;
+                score = 0;
+                isQuizComplete = false;
+
+                // Show the quiz container
+                const quizContainer = document.getElementById('quizContainer');
+                quizContainer.classList.remove('hidden');
+                
+                // Hide the welcome section
+                const welcomeSection = document.getElementById('welcomeSection');
+                welcomeSection.style.display = 'none';
+
+                // Display the first question
+                displayQuestion();
+            } catch (error) {
+                console.error('Error starting quiz:', error);
+                // Reset the button state on error
+                button.disabled = false;
+                button.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Start Quiz
+                `;
+                alert('Failed to start quiz. Please try again.');
+            }
+        }
+
+        function displayQuestion() {
+            if (!currentQuiz || currentQuestion >= currentQuiz.length) {
+                showCompletionModal();
+                return;
+            }
+
+            const question = currentQuiz[currentQuestion];
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const submitButton = document.getElementById('submitAnswerBtn');
+            const questionProgress = document.getElementById('questionProgress');
+            const questionCount = document.getElementById('questionCount');
+
+            // Update question text
+            questionText.textContent = question.question;
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+
+            // Create radio buttons for each option
+            question.options.forEach((option, optionIndex) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'flex items-center p-3 rounded-lg border border-gray-200 hover:border-purple-500 cursor-pointer transition-colors';
+                optionDiv.innerHTML = `
+                    <input type="radio" name="answer" value="${optionIndex}" class="form-radio h-4 w-4 text-purple-600">
+                    <label class="ml-3 text-gray-700">${option}</label>
+                `;
+                optionDiv.onclick = () => {
+                    const radio = optionDiv.querySelector('input');
+                    radio.checked = true;
+                    submitButton.disabled = false;
+                };
+                optionsContainer.appendChild(optionDiv);
+            });
+
+            // Update progress
+            questionProgress.textContent = `Question ${currentQuestion + 1} of ${currentQuiz.length}`;
+            questionCount.textContent = `${currentQuestion + 1}/${currentQuiz.length}`;
+
+            // Reset submit button
+            submitButton.disabled = true;
+            submitButton.onclick = submitAnswer;
+        }
+
+        function submitAnswer() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (!selectedAnswer) return;
+
+            const answerIndex = parseInt(selectedAnswer.value);
+            const question = currentQuiz[currentQuestion];
+            
+            // Show feedback for the answer
+            const optionsContainer = document.getElementById('optionsContainer');
+            const options = optionsContainer.querySelectorAll('div');
+            
+            // Disable all options after answering
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+                const radio = option.querySelector('input');
+                radio.disabled = true;
+            });
+
+            // Highlight correct and incorrect answers
+            options.forEach((option, index) => {
+                if (index === question.correct_answer) {
+                    option.classList.add('bg-green-100', 'border-green-500');
+                    option.classList.remove('hover:border-purple-500');
+                } else if (index === answerIndex && index !== question.correct_answer) {
+                    option.classList.add('bg-red-100', 'border-red-500');
+                    option.classList.remove('hover:border-purple-500');
+                }
+            });
+
+            // Update score if correct
+            if (answerIndex === question.correct_answer) {
+                score++;
+            }
+
+            // Wait 2 seconds before moving to next question
+            setTimeout(() => {
+                currentQuestion++;
+                displayQuestion();
+            }, 2000);
+        }
+
+        function showCompletionModal() {
+            const modal = document.getElementById('completionModal');
+            const modalContent = document.getElementById('completionModalContent');
+            
+            // Calculate percentage
+            const percentage = (score / currentQuiz.length) * 100;
+            
+            // Update course progress
+            const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+            const currentCourseIndex = courses.findIndex(c => c.name === currentQuiz[0].topic);
+            if (currentCourseIndex !== -1) {
+                courses[currentCourseIndex].progress = Math.min(100, courses[currentCourseIndex].progress + (100 / courses[currentCourseIndex].daysToComplete));
+                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+                updateCoursesInProgress();
+            }
+
+            // Show completion modal with detailed results
+            modalContent.innerHTML = `
+                <div class="text-center">
+                    <div class="text-6xl mb-4">${percentage >= 70 ? '🎉' : '💪'}</div>
+                    <h2 class="text-2xl font-bold mb-4">Quiz Complete!</h2>
+                    <p class="mb-4">You scored ${score} out of ${currentQuiz.length} (${percentage.toFixed(1)}%)</p>
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-600">${percentage >= 70 ? 'Great job! Keep up the good work!' : 'Keep practicing! You\'ll get better!'}</p>
+                    </div>
+                    <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Back to Courses
+                    </button>
+                </div>
+            `;
+            modal.style.display = 'block';
         }
     </script>
 </body>

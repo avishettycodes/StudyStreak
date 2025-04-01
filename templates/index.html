@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
     <title>StudyStreak</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
             background-color: #f0f2f5;
             -webkit-tap-highlight-color: transparent;
         }
@@ -24,7 +27,15 @@
             position: relative;
             overflow-x: hidden;
         }
-        .header-container {
+        @supports (padding: max(0px)) {
+            .app-container {
+                padding-top: max(env(safe-area-inset-top), 0px);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        .app-header {
             position: fixed;
             top: 0;
             left: 0;
@@ -32,47 +43,139 @@
             z-index: 10;
             background: white;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 0;
         }
         .header-content {
             max-width: 480px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .badges-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .level-badge {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+        .stars-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        .streak-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        .badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 640px) {
+            .app-header {
+                padding: 0.5rem 0;
+            }
+            .header-right {
+                gap: 0.5rem;
+            }
+            .badges-container {
+                gap: 0.375rem;
+            }
+            .badge {
+                padding: 0.375rem 0.625rem;
+                font-size: 0.75rem;
+            }
+            .app-title {
+                font-size: 1.125rem;
+            }
         }
         .main-content {
-            padding-top: 4rem;
+            padding-top: 56px; /* Adjusted to match new header height */
+            padding-bottom: 2rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
         .streak-badge {
             background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-            padding: 4px 8px;
-            border-radius: 16px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
             box-shadow: 0 4px 6px -1px rgba(255, 107, 107, 0.1), 0 2px 4px -1px rgba(255, 107, 107, 0.06);
             transition: all 0.3s ease;
-            font-size: 0.875rem;
             white-space: nowrap;
         }
         .level-badge {
             background: linear-gradient(135deg, #4F46E5, #6366F1);
-            padding: 4px 8px;
-            border-radius: 16px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
             box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
             transition: all 0.3s ease;
-            font-size: 0.875rem;
             white-space: nowrap;
         }
         .stars-badge {
             background: linear-gradient(135deg, #F59E0B, #FCD34D);
-            padding: 4px 8px;
-            border-radius: 16px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
             box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
             transition: all 0.3s ease;
-            font-size: 0.875rem;
             white-space: nowrap;
         }
         .exp-bar {
             width: 100%;
-            height: 4px;
+            height: 6px;
             background-color: #e5e7eb;
-            border-radius: 2px;
+            border-radius: 3px;
             overflow: hidden;
         }
         .exp-progress {
@@ -82,58 +185,91 @@
         }
         .stats-container {
             display: flex;
-            gap: 6px;
+            gap: 0.5rem;
             align-items: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            background: linear-gradient(135deg, #6366F1, #4F46E5);
             color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
             font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+            font-size: 1rem;
+            letter-spacing: -0.01em;
+            padding: 0.875rem 1.75rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2),
+                       0 1px 3px rgba(79, 70, 229, 0.1),
+                       inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transform-origin: center;
+            will-change: transform, box-shadow;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
         }
-        .btn-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, #4338CA, #4F46E5);
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2), 0 4px 6px -2px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25),
+                       0 2px 6px rgba(79, 70, 229, 0.15),
+                       inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            background: linear-gradient(135deg, #7075F5, #5C54E8);
         }
-        .btn-primary:active:not(:disabled) {
-            transform: translateY(0);
+        .btn-primary:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.2),
+                       inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition-duration: 34ms;
+        }
+        .btn-primary:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3),
+                       0 2px 6px rgba(79, 70, 229, 0.15);
         }
         .btn-primary:disabled {
-            opacity: 0.5;
+            opacity: 0.65;
             cursor: not-allowed;
             background: linear-gradient(135deg, #9CA3AF, #D1D5DB);
+            transform: none;
+            box-shadow: none;
         }
         .input-field {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 12px;
             width: 100%;
-            transition: border-color 0.2s;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
         }
         .input-field:focus {
-            border-color: #4f46e5;
             outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+        .input-field::placeholder {
+            color: #94a3b8;
         }
         .upload-container {
+            border: 2px dashed #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 2rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px dashed #E5E7EB;
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease-in-out;
         }
         .upload-container:hover {
-            border-color: #4F46E5;
-            background: linear-gradient(145deg, #ffffff, #f3f4f6);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .upload-container:active {
-            transform: translateY(0);
+            border-color: #60a5fa;
+            background-color: rgba(96, 165, 250, 0.05);
         }
         .file-icon {
             font-size: 48px;
@@ -157,23 +293,136 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
         .modal-content {
             background: linear-gradient(145deg, #ffffff, #f8fafc);
-            border-radius: 1.5rem;
+            border-radius: 1.25rem;
             padding: 1.5rem;
             max-width: 90%;
-            width: 480px;
-            margin: 2rem auto;
-            max-height: calc(100vh - 4rem);
+            width: 420px;
+            margin: 1rem;
+            max-height: calc(100vh - 2rem);
             overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: translateY(0);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                       0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
         }
-        .modal-content:hover {
+
+        .modal.show .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .modal-close {
+            padding: 0.5rem;
+            color: #6B7280;
+            transition: color 250ms ease;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #111827;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .dark-theme .modal-content {
+            background: linear-gradient(145deg, #1c1c1e, #2c2c2e);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+                       0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme .modal-title {
+            color: #ffffff;
+        }
+
+        .dark-theme .modal-close {
+            color: #9CA3AF;
+        }
+
+        .dark-theme .modal-close:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 640px) {
+            .modal-content {
+                margin: 1rem;
+                max-height: calc(100vh - 2rem);
+            }
+            .header-container {
+                padding: 0.5rem 0;
+            }
+            .stats-container {
+                margin-top: 0.5rem;
+                justify-content: center;
+            }
+            .level-badge, .stars-badge, .streak-badge {
+                padding: 0.375rem 0.625rem;
+                font-size: 0.75rem;
+                min-height: 32px;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            .modal-content {
+                padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Course Card Template */
+        .course-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                       0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .course-card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+                       0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+
         .progress-ring {
             transform: rotate(-90deg);
         }
@@ -259,9 +508,9 @@
         /* Add quiz container styles */
         #quizContainer {
             background: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-top: 2rem;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
@@ -300,33 +549,468 @@
             opacity: 1;
             pointer-events: auto;
         }
+
+        /* Add to existing styles */
+        @supports (padding: max(0px)) {
+            .app-container {
+                padding-top: max(4rem, env(safe-area-inset-top));
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+
+        /* Improve touch targets for mobile */
+        button, .btn-primary, .badge-button {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+
+        /* Add mobile-specific animations */
+        .modal-content {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Add pull-to-refresh animation */
+        .pull-to-refresh {
+            height: 60px;
+            margin-top: -60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.3s;
+        }
+
+        .pull-to-refresh.active {
+            height: 60px;
+        }
+
+        /* Native-looking alerts */
+        .native-alert {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            border-radius: 16px 16px 0 0;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .native-alert.show {
+            transform: translateY(0);
+        }
+
+        /* Add haptic feedback styles */
+        .haptic-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Add to existing styles */
+        @keyframes subtle-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .start-quiz-btn {
+            background: linear-gradient(135deg, #38BDF8, #0EA5E9);
+            color: white;
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            letter-spacing: -0.01em;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(14, 165, 233, 0.15),
+                       0 1px 3px rgba(14, 165, 233, 0.1),
+                       inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transform-origin: center;
+            will-change: transform, box-shadow;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .start-quiz-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25),
+                       0 2px 6px rgba(14, 165, 233, 0.15),
+                       inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            background: linear-gradient(135deg, #42C5FF, #18AFEF);
+        }
+
+        .start-quiz-btn:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 1px 3px rgba(14, 165, 233, 0.2),
+                       inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition-duration: 34ms;
+        }
+
+        .start-quiz-btn svg {
+            width: 1.125rem;
+            height: 1.125rem;
+            flex-shrink: 0;
+            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+            transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .start-quiz-btn:hover svg {
+            transform: scale(1.1);
+        }
+
+        .start-quiz-btn span {
+            position: relative;
+            font-weight: 600;
+            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.98);
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-quiz-btn.new {
+            animation: subtle-pulse 2s infinite;
+        }
+
+        @media (hover: hover) {
+            .start-quiz-btn:hover {
+                background-position: 100% 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .start-quiz-btn {
+                transition: none;
+            }
+            .start-quiz-btn:before {
+                transition: none;
+            }
+            .start-quiz-btn svg {
+                transition: none;
+            }
+            .start-quiz-btn.new {
+                animation: none;
+            }
+        }
+
+        /* Empty State Styling */
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 1rem;
+            border: 2px dashed #E5E7EB;
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            color: #6B7280;
+            font-size: 0.9375rem;
+            max-width: 15rem;
+            margin: 0 auto;
+        }
+
+        /* Card Styling */
+        .course-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                       0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+                       0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Icon Styling */
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #6B7280;
+            transition: color 250ms ease;
+        }
+
+        .icon:hover {
+            color: #4F46E5;
+        }
+
+        .icon-button {
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            transition: all 250ms ease;
+        }
+
+        .icon-button:hover {
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 0.5rem;
+            border-radius: 9999px;
+            overflow: hidden;
+            background: #E5E7EB;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #6366F1, #4F46E5);
+            transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Settings Modal */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 1rem;
+            background: linear-gradient(145deg, #f8fafc, #ffffff);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .theme-toggle:hover {
+            background: linear-gradient(145deg, #f3f4f6, #ffffff);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                       0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .theme-toggle:active {
+            transform: translateY(0);
+        }
+
+        .theme-toggle-label {
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .theme-toggle-icon {
+            font-size: 1.25rem;
+            transition: transform 250ms ease;
+        }
+
+        .theme-toggle:hover .theme-toggle-icon {
+            transform: rotate(15deg);
+        }
+
+        .dark-theme .theme-toggle {
+            background: linear-gradient(145deg, #2c2c2e, #1c1c1e);
+            border-color: rgba(75, 85, 99, 0.5);
+        }
+
+        .dark-theme .theme-toggle:hover {
+            background: linear-gradient(145deg, #3c3c3e, #2c2c2e);
+        }
+
+        .dark-theme .theme-toggle-label {
+            color: #ffffff;
+        }
+
+        /* File list styles */
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            color: #1e293b;
+        }
+
+        .file-item .remove-file {
+            color: #ef4444;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .file-item .remove-file:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Course Card Styles */
+        .course-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .course-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .course-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .icon-button {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+
+        .icon-button:hover {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .course-progress {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 0.5rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        .course-stats {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .separator {
+            color: #cbd5e1;
+        }
+
+        /* Empty State Styles */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
-        <header class="header-container">
+        <header class="app-header">
             <div class="header-content">
-                <div class="flex justify-between items-center">
-                    <h1 class="text-lg font-bold text-gray-900">StudyStreak</h1>
-                    <div class="flex items-center gap-4">
-                        <button onclick="showSettingsModal()" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </button>
-                        <div class="stats-container">
-                            <span class="level-badge text-white text-sm font-semibold badge-button" onclick="showLevelModal()">
-                                🏆 <span id="userLevel" class="text-sm">Novice Learner</span>
-                            </span>
-                            <span class="stars-badge text-white text-sm font-semibold badge-button" onclick="showShopModal()">
-                                ⭐ <span id="userStars">0</span>
-                            </span>
-                            <span class="streak-badge text-white text-sm font-semibold badge-button" onclick="celebrateStreak()">
-                                🔥 <span id="streakCount">0</span>
-                            </span>
-                        </div>
+                <div class="header-left">
+                    <h1 class="app-title">StudyStreak</h1>
+                </div>
+                <div class="header-right">
+                    <button onclick="showSettingsModal()" class="icon-button">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                    <div class="badges-container">
+                        <span class="badge level-badge" onclick="showLevelModal()">
+                            🏆 <span id="userLevel">Novice Learner</span>
+                        </span>
+                        <span class="badge stars-badge" onclick="showShopModal()">
+                            ⭐ <span id="userStars">0</span>
+                        </span>
+                        <span class="badge streak-badge" onclick="celebrateStreak()">
+                            🔥 <span id="streakCount">0</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -335,46 +1019,46 @@
         <!-- Level Progress Modal -->
         <div id="levelModal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Your Learning Journey</h3>
-                    <button onclick="hideLevelModal()" class="text-gray-500">✕</button>
+                <div class="modal-header">
+                    <h3 class="modal-title">Your Learning Journey</h3>
+                    <button onclick="hideLevelModal()" class="modal-close">✕</button>
                 </div>
-                <div class="space-y-6">
+                <div class="modal-body space-y-6">
                     <div class="text-center">
-                        <div class="inline-block relative">
-                            <svg class="progress-ring" width="120" height="120">
-                                <circle class="progress-ring-circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
-                                <circle id="levelProgress" class="progress-ring-circle" stroke="#7c3aed" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="326.7256359733385" stroke-dashoffset="326.7256359733385"/>
+                        <div class="inline-block relative w-32 h-32">
+                            <svg class="progress-ring" width="128" height="128">
+                                <circle class="progress-ring-circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="56" cx="64" cy="64"/>
+                                <circle id="levelProgress" class="progress-ring-circle" stroke="#7c3aed" stroke-width="8" fill="transparent" r="56" cx="64" cy="64"/>
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <div class="text-center">
-                                    <div id="currentLevel" class="text-2xl font-bold text-purple-600">1</div>
+                                    <div id="currentLevel" class="text-3xl font-bold text-purple-600">1</div>
                                     <div class="text-sm text-gray-500">Level</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h4 class="font-semibold mb-2">Statistics</h4>
+                        <h4 class="font-semibold mb-3">Statistics</h4>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <div class="text-sm text-gray-500">Hours Studied</div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500 mb-1">Hours Studied</div>
                                 <div id="hoursStudied" class="text-xl font-semibold">0</div>
                             </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <div class="text-sm text-gray-500">Quizzes Completed</div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500 mb-1">Quizzes Completed</div>
                                 <div id="quizzesCompleted" class="text-xl font-semibold">0</div>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h4 class="font-semibold mb-2">Next Level</h4>
+                        <h4 class="font-semibold mb-3">Next Level</h4>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <div class="flex justify-between items-center mb-3">
                                 <span id="nextLevelTitle" class="font-medium text-lg">Knowledge Seeker (Level 2)</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-                                <div id="levelProgressBar" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                <div id="levelProgressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                             <p class="text-sm text-gray-600 text-center">
                                 <span id="quizzesRemaining">Complete 1 more quiz</span>
@@ -388,131 +1072,35 @@
         <!-- Star Shop Modal -->
         <div id="shopModal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Star Shop</h3>
-                    <button onclick="hideShopModal()" class="text-gray-500">✕</button>
+                <div class="modal-header">
+                    <h3 class="modal-title">Star Shop</h3>
+                    <button onclick="hideShopModal()" class="modal-close">✕</button>
                 </div>
-                <div class="mb-4">
-                    <div class="bg-yellow-50 p-3 rounded-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-medium">Your Stars</span>
-                            <span class="text-xl font-bold">⭐ <span id="shopStars">0</span></span>
-                        </div>
-                        <p class="text-sm text-gray-600">Complete quizzes and get correct answers to earn stars!</p>
-                    </div>
-                </div>
-                <div class="space-y-6">
-                    <!-- Study Tools -->
-                    <div>
-                        <h4 class="font-semibold mb-3 text-gray-700">Study Tools</h4>
-                        <div class="space-y-3">
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Quiz Hint Pack</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 30</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Get 3 hints to use during your quizzes</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="hintCount">You have: 0 hints</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('hints')" disabled>Purchase</button>
-                                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="bg-yellow-50 p-3 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">Your Stars</span>
+                                <span class="text-xl font-bold">⭐ <span id="shopStars">0</span></span>
                             </div>
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Answer Review</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 50</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Review your quiz answers with detailed explanations</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="reviewCount">You have: 0 reviews</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('review')" disabled>Purchase</button>
-                                </div>
-                            </div>
+                            <p class="text-sm text-gray-600">Complete quizzes and get correct answers to earn stars!</p>
                         </div>
                     </div>
-
-                    <!-- Streak Protection -->
-                    <div>
-                        <h4 class="font-semibold mb-3 text-gray-700">Streak Protection</h4>
-                        <div class="space-y-3">
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Streak Shield</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 100</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Protect your streak for one day if you miss a quiz</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="shieldCount">You have: 0 shields</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('shield')" disabled>Purchase</button>
-                                </div>
-                            </div>
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Streak Freeze</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 200</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Freeze your streak for up to 3 days</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="freezeCount">You have: 0 freezes</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('freeze')" disabled>Purchase</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Customization -->
-                    <div>
-                        <h4 class="font-semibold mb-3 text-gray-700">Customization</h4>
-                        <div class="space-y-3">
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Custom Themes</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 75</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Unlock dark mode and other color themes</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="themeStatus">Status: Not Unlocked</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('themes')" disabled>Purchase</button>
-                                </div>
-                            </div>
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Profile Badges</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 150</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Unlock special achievement badges for your profile</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="badgeCount">Unlocked: 0/10</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('badges')" disabled>Purchase</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Power-ups -->
-                    <div>
-                        <h4 class="font-semibold mb-3 text-gray-700">Power-ups</h4>
-                        <div class="space-y-3">
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">Double Stars</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 300</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Earn double stars for 24 hours</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="doubleStatus">Status: Not Active</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('double')" disabled>Purchase</button>
-                                </div>
-                            </div>
-                            <div class="shop-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-medium">XP Boost</span>
-                                    <span class="text-purple-600 font-semibold">⭐ 250</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">Get 50% more XP for 24 hours</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-gray-400" id="xpBoostStatus">Status: Not Active</span>
-                                    <button class="btn-primary px-4" onclick="purchaseItem('xpBoost')" disabled>Purchase</button>
+                    <div class="space-y-6">
+                        <!-- Study Tools -->
+                        <div>
+                            <h4 class="font-semibold mb-3 text-gray-700">Study Tools</h4>
+                            <div class="space-y-3">
+                                <div class="course-card">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-medium">Quiz Hint Pack</span>
+                                        <span class="text-purple-600 font-semibold">⭐ 30</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mb-2">Get 3 hints to use during your quizzes</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-gray-400" id="hintCount">You have: 0 hints</span>
+                                        <button class="btn-primary px-4" onclick="purchaseItem('hints')" disabled>Purchase</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -523,63 +1111,60 @@
 
         <!-- Course Creation Modal -->
         <div id="courseCreationModal" class="modal">
-            <div class="modal-content max-w-md">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold">Create Your Course</h3>
-                    <button onclick="hideCourseCreationModal()" class="text-gray-500">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Create Your Course</h3>
+                    <button onclick="hideCourseCreationModal()" class="modal-close">✕</button>
                 </div>
-                <div class="space-y-4">
-                    <!-- Course Name -->
-                    <div>
-                        <label for="courseName" class="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
-                        <input type="text" id="courseName" class="input-field" placeholder="Enter course name" required>
-                    </div>
-
-                    <!-- Days to Complete -->
-                    <div>
-                        <label for="daysToComplete" class="block text-sm font-medium text-gray-700 mb-1">Days to Complete</label>
-                        <input type="number" id="daysToComplete" class="input-field" min="1" max="365" placeholder="Enter number of days (max 365)" required>
-                    </div>
-
-                    <!-- Quizzes per Day -->
-                    <div>
-                        <label for="quizzesPerDay" class="block text-sm font-medium text-gray-700 mb-1">Quizzes per Day</label>
-                        <input type="number" id="quizzesPerDay" class="input-field" min="1" max="5" placeholder="Enter quizzes per day (max 5)" required>
-                    </div>
-
-                    <!-- Questions per Quiz -->
-                    <div>
-                        <label for="questionsPerQuiz" class="block text-sm font-medium text-gray-700 mb-1">Questions per Quiz</label>
-                        <input type="number" id="questionsPerQuiz" class="input-field" min="1" max="50" placeholder="Enter questions per quiz (max 50)" required>
-                    </div>
-
-                    <!-- Additional Input -->
-                    <div>
-                        <label for="additionalInput" class="block text-sm font-medium text-gray-700 mb-1">Additional Input (Optional)</label>
-                        <textarea id="additionalInput" class="input-field" rows="3" maxlength="500" placeholder="Any additional information or requirements (max 500 characters)"></textarea>
-                        <div class="text-xs text-gray-500 mt-1">
-                            <span id="charCount">0</span>/500 characters
+                <div class="modal-body">
+                    <form id="courseCreationForm" class="space-y-5">
+                        <div>
+                            <label for="courseName" class="block text-sm font-medium text-gray-700 mb-2">Course Name</label>
+                            <input type="text" id="courseName" class="input-field w-full" placeholder="Enter course name" required>
                         </div>
-                    </div>
 
-                    <!-- File Upload -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Files</label>
-                        <div class="upload-container p-4 rounded-lg cursor-pointer">
-                            <input type="file" id="courseFiles" class="hidden" multiple accept=".txt,.pdf,.docx">
-                            <div class="text-center">
-                                <div class="mb-2">📄</div>
-                                <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
-                                <p class="text-xs text-gray-500 mt-1">Supports: PDF, DOCX, TXT</p>
+                        <div>
+                            <label for="daysToComplete" class="block text-sm font-medium text-gray-700 mb-2">Days to Complete</label>
+                            <input type="number" id="daysToComplete" class="input-field w-full" min="1" max="365" placeholder="Enter number of days (max 365)" required>
+                        </div>
+
+                        <div>
+                            <label for="quizzesPerDay" class="block text-sm font-medium text-gray-700 mb-2">Quizzes per Day</label>
+                            <input type="number" id="quizzesPerDay" class="input-field w-full" min="1" max="5" placeholder="Enter quizzes per day (max 5)" required>
+                        </div>
+
+                        <div>
+                            <label for="questionsPerQuiz" class="block text-sm font-medium text-gray-700 mb-2">Questions per Quiz</label>
+                            <input type="number" id="questionsPerQuiz" class="input-field w-full" min="1" max="50" placeholder="Enter questions per quiz (max 50)" required>
+                        </div>
+
+                        <div>
+                            <label for="additionalInput" class="block text-sm font-medium text-gray-700 mb-2">Additional Input (Optional)</label>
+                            <textarea id="additionalInput" class="input-field w-full" rows="3" maxlength="500" placeholder="Any additional information or requirements"></textarea>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <span id="charCount">0</span>/500 characters
                             </div>
                         </div>
-                        <div id="uploadedFilesList" class="mt-2 text-sm text-gray-600"></div>
-                    </div>
 
-                    <!-- Create Course Button -->
-                    <button id="createCourseBtn" class="btn-primary w-full mt-6" disabled>
-                        Create Course
-                    </button>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
+                            <div class="upload-container">
+                                <input type="file" id="courseFiles" class="hidden" multiple accept=".txt,.pdf,.docx">
+                                <div class="text-center">
+                                    <div class="text-4xl mb-3">📄</div>
+                                    <p class="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
+                                    <p class="text-xs text-gray-500">Supports: PDF, DOCX, TXT</p>
+                                </div>
+                            </div>
+                            <div id="uploadedFilesList" class="mt-3 space-y-1"></div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" id="createCourseBtn" class="btn-primary w-full" disabled>
+                                Create Course
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -587,50 +1172,88 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Welcome Screen -->
-            <div id="welcomeSection" class="px-4 py-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Learn Smarter</h2>
+            <div id="welcomeSection" class="px-4 pt-2 pb-6">
+                <h2 class="section-title text-center">Learn Smarter</h2>
                 <div class="max-w-md mx-auto">
-                    <div class="flex flex-col items-center justify-center p-6">
-                        <button onclick="showCourseCreationModal()" class="btn-primary w-full">Create Your Own Course</button>
+                    <div class="flex flex-col items-center justify-center mb-8">
+                        <button onclick="showCourseCreationModal()" class="btn-primary w-full">
+                            Create Your Own Course
+                        </button>
                     </div>
 
                     <!-- Courses in Progress -->
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Courses in Progress</h3>
+                    <div class="mb-8">
+                        <h3 class="section-title">Courses in Progress</h3>
                         <div class="space-y-4" id="coursesInProgress">
                             <!-- Empty state -->
-                            <div class="text-center py-8 bg-gray-50 rounded-lg">
-                                <p class="text-gray-500">No courses in progress</p>
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📚</div>
+                                <p class="empty-state-text">No courses in progress yet. Create your first course to get started!</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Completed Courses -->
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Completed Courses</h3>
+                    <div class="mb-8">
+                        <h3 class="section-title">Completed Courses</h3>
                         <div class="space-y-4" id="completedCourses">
                             <!-- Empty state -->
-                            <div class="text-center py-8 bg-gray-50 rounded-lg">
-                                <p class="text-gray-500">No completed courses</p>
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <p class="empty-state-text">Complete your first course to see it here!</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quiz Container -->
-            <div id="quizContainer" class="px-4 py-8 max-w-md mx-auto space-y-6 hidden">
+            <!-- Course card template -->
+            <template id="courseCardTemplate">
+                <div class="course-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-semibold text-gray-900 text-lg"></h4>
+                        <div class="flex items-center gap-3">
+                            <button onclick="startQuiz(' + index + ')" class="start-quiz-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Start Quiz</span>
+                            </button>
+                            <button class="icon-button" onclick="editCourse(' + index + ')">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                </svg>
+                            </button>
+                            <button class="icon-button text-red-500 hover:text-red-700" onclick="deleteCourse(' + index + ')">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ' + (progress || 0) + '%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>' + (quizzesCompleted || 0) + '/' + (totalRequiredQuizzes || 0) + ' quizzes completed</span>
+                        <span>' + (quizzesPerDay || 0) + ' quizzes/day</span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Quiz container with consistent spacing -->
+            <div id="quizContainer" class="max-w-md mx-auto space-y-6 hidden">
                 <div id="quizContent" class="space-y-6">
-                    <!-- Question display -->
                     <div id="currentQuestion" class="mb-6">
-                        <p id="questionText" class="font-medium mb-4"></p>
-                        <div id="optionsContainer" class="space-y-2"></div>
-                        <!-- Submit button -->
-                        <button id="submitAnswerBtn" class="btn-primary w-full mt-4" disabled>
+                        <p id="questionText" class="text-lg font-medium mb-4"></p>
+                        <div id="optionsContainer" class="space-y-3"></div>
+                        <button id="submitAnswerBtn" class="btn-primary w-full mt-6" disabled>
                             Submit Answer
                         </button>
                     </div>
-                    <!-- Progress indicator -->
                     <div class="flex justify-between items-center text-sm text-gray-500">
                         <span id="questionProgress"></span>
                         <span id="questionCount"></span>
@@ -642,17 +1265,17 @@
         <!-- Settings Modal -->
         <div id="settingsModal" class="modal">
             <div class="modal-content max-w-md">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold">Settings</h3>
-                    <button onclick="hideSettingsModal()" class="text-gray-500">✕</button>
+                <div class="modal-header">
+                    <h3 class="modal-title">Settings</h3>
+                    <button onclick="hideSettingsModal()" class="modal-close">✕</button>
                 </div>
-                <div class="space-y-6">
+                <div class="modal-body">
                     <!-- Theme Toggle -->
                     <div>
                         <h4 class="font-medium mb-3">Theme</h4>
-                        <button id="themeToggle" class="flex items-center justify-between w-full p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors" onclick="toggleTheme()">
-                            <span id="themeLabel">Light Mode</span>
-                            <span id="themeIcon">🌞</span>
+                        <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()">
+                            <span id="themeLabel" class="theme-toggle-label">Light Mode</span>
+                            <span id="themeIcon" class="theme-toggle-icon">🌞</span>
                         </button>
                     </div>
                 </div>
@@ -662,7 +1285,7 @@
         <!-- Completion Modal -->
         <div id="completionModal" class="modal">
             <div class="modal-content">
-                <div id="completionModalContent" class="text-center">
+                <div id="completionModalContent" class="modal-body text-center">
                     <!-- Content will be dynamically inserted here -->
                 </div>
             </div>
@@ -671,9 +1294,9 @@
         <!-- Delete Confirmation Modal -->
         <div id="deleteConfirmationModal" class="modal">
             <div class="modal-content max-w-xs">
-                <div class="text-center p-4">
+                <div class="modal-body text-center">
                     <div class="text-4xl mb-4">🗑️</div>
-                    <h3 class="text-xl font-semibold mb-4">Delete Course</h3>
+                    <h3 class="modal-title mb-4">Delete Course</h3>
                     <p class="text-gray-600 mb-6">Are you sure you want to delete this course? This action cannot be undone.</p>
                     <div class="flex flex-col gap-3">
                         <button id="confirmDeleteBtn" class="btn-primary bg-red-500 hover:bg-red-600">
@@ -687,43 +1310,45 @@
             </div>
         </div>
 
-        <div id="resultsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4 relative">
-                <button onclick="closeResultsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-                <div class="text-center mb-6">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">🎉 Congratulations!</h3>
-                    <p class="text-lg text-gray-600">Here are your results for <span id="resultCourseName" class="font-semibold"></span></p>
+        <!-- Results Modal -->
+        <div id="resultsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Course Results</h3>
+                    <button onclick="closeResultsModal()" class="modal-close">✕</button>
                 </div>
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-500">Correct Answers</p>
-                                <p id="correctAnswers" class="font-semibold text-green-600"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Wrong Answers</p>
-                                <p id="wrongAnswers" class="font-semibold text-red-600"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Average Score</p>
-                                <p id="averageScore" class="font-semibold text-blue-600"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Completion Date</p>
-                                <p id="completionDate" class="font-semibold text-gray-900"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Days to Complete</p>
-                                <p id="daysToComplete" class="font-semibold text-gray-900"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Quizzes Completed</p>
-                                <p id="quizzesCompleted" class="font-semibold text-gray-900"></p>
+                <div class="modal-body">
+                    <div class="text-center mb-6">
+                        <div class="text-4xl mb-4">🎉</div>
+                        <p class="text-lg text-gray-600">Here are your results for <span id="resultCourseName" class="font-semibold"></span></p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Correct Answers</p>
+                                    <p id="correctAnswers" class="font-semibold text-green-600"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Wrong Answers</p>
+                                    <p id="wrongAnswers" class="font-semibold text-red-600"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Average Score</p>
+                                    <p id="averageScore" class="font-semibold text-blue-600"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Completion Date</p>
+                                    <p id="completionDate" class="font-semibold text-gray-900"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Days to Complete</p>
+                                    <p id="daysToComplete" class="font-semibold text-gray-900"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Quizzes Completed</p>
+                                    <p id="quizzesCompleted" class="font-semibold text-gray-900"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -776,9 +1401,25 @@
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) {
-                        modal.style.display = 'none';
-                        if (modal.id === 'completionModal') {
-                            returnToMain();
+                        const modalId = modal.id;
+                        switch(modalId) {
+                            case 'levelModal':
+                                hideLevelModal();
+                                break;
+                            case 'shopModal':
+                                hideShopModal();
+                                break;
+                            case 'settingsModal':
+                                hideSettingsModal();
+                                break;
+                            case 'completionModal':
+                                hideModal('completionModal');
+                                break;
+                            default:
+                                modal.classList.remove('show');
+                                setTimeout(() => {
+                                    modal.style.display = 'none';
+                                }, 300);
                         }
                     }
                 });
@@ -787,11 +1428,19 @@
 
         // Settings Modal Functions
         function showSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'block';
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
         }
 
         function hideSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
 
         // Theme Toggle Function
@@ -823,19 +1472,37 @@
 
         // Badge button functions
         function showLevelModal() {
-            document.getElementById('levelModal').style.display = 'block';
+            const modal = document.getElementById('levelModal');
+            modal.style.display = 'flex';
+            // Use requestAnimationFrame to ensure the display: flex is applied before adding the show class
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
         }
 
         function hideLevelModal() {
-            document.getElementById('levelModal').style.display = 'none';
+            const modal = document.getElementById('levelModal');
+            modal.classList.remove('show');
+            // Wait for the animation to complete before hiding the modal
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
 
         function showShopModal() {
-            document.getElementById('shopModal').style.display = 'block';
+            const modal = document.getElementById('shopModal');
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
         }
 
         function hideShopModal() {
-            document.getElementById('shopModal').style.display = 'none';
+            const modal = document.getElementById('shopModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
 
         function celebrateStreak() {
@@ -846,11 +1513,11 @@
             let content;
             if (streakCount === 0) {
                 content = `
-                    <div class="text-center">
+                    <div class="text-center p-6">
                         <div class="text-6xl mb-4">😢</div>
                         <h2 class="text-2xl font-bold mb-4">Start Your Streak!</h2>
-                        <p class="mb-4">Complete a quiz today to begin your learning streak!</p>
-                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <p class="mb-6 text-gray-600">Complete a quiz today to begin your learning streak!</p>
+                        <button onclick="hideModal('completionModal')" class="btn-primary px-6 py-2">
                             Start Learning
                         </button>
                     </div>
@@ -864,12 +1531,12 @@
                 });
                 
                 content = `
-                    <div class="text-center">
+                    <div class="text-center p-6">
                         <div class="text-6xl mb-4">🔥</div>
                         <h2 class="text-2xl font-bold mb-4">${streakCount} Day Streak!</h2>
-                        <p class="mb-4">Keep up the amazing work!</p>
-                        <p class="text-sm text-gray-600 mb-4">Complete a quiz every day to maintain your streak</p>
-                        <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <p class="mb-3 text-gray-600">Keep up the amazing work!</p>
+                        <p class="text-sm text-gray-500 mb-6">Complete a quiz every day to maintain your streak</p>
+                        <button onclick="hideModal('completionModal')" class="btn-primary px-6 py-2">
                             Continue Learning
                         </button>
                     </div>
@@ -877,20 +1544,24 @@
             }
             
             modalContent.innerHTML = content;
-            modal.style.display = 'block';
+            showModal('completionModal');
         }
 
-        function returnToMain() {
-            // Hide all modals
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            // Use requestAnimationFrame to ensure the display: flex is applied before adding the show class
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
             });
-            
-            // Show welcome section
-            showHomeScreen();
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
 
         // Add function to load user stats
@@ -946,263 +1617,152 @@
 
         // Course Creation Modal Functions
         function showCourseCreationModal() {
-            document.getElementById('courseCreationModal').style.display = 'block';
-            setupCourseCreationForm();
+            const modal = document.getElementById('courseCreationModal');
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+            });
         }
 
         function hideCourseCreationModal() {
-            document.getElementById('courseCreationModal').style.display = 'none';
-            // Reset form
-            document.getElementById('courseName').value = '';
-            document.getElementById('daysToComplete').value = '';
-            document.getElementById('quizzesPerDay').value = '';
-            document.getElementById('questionsPerQuiz').value = '';
-            document.getElementById('additionalInput').value = '';
-            document.getElementById('courseFiles').value = '';
-            document.getElementById('uploadedFilesList').innerHTML = '';
-            document.getElementById('createCourseBtn').disabled = true;
-            localStorage.removeItem('editingCourseIndex'); // Clear editing state
+            const modal = document.getElementById('courseCreationModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
 
-        function setupCourseCreationForm() {
-            const courseName = document.getElementById('courseName');
-            const daysToComplete = document.getElementById('daysToComplete');
-            const quizzesPerDay = document.getElementById('quizzesPerDay');
-            const questionsPerQuiz = document.getElementById('questionsPerQuiz');
-            const additionalInput = document.getElementById('additionalInput');
+        // File Upload Handling
+        document.getElementById('courseFiles').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const filesList = document.getElementById('uploadedFilesList');
+            filesList.innerHTML = '';
+
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <button class="remove-file" onclick="removeFile(this)">✕</button>
+                `;
+                filesList.appendChild(fileItem);
+            });
+
+            validateForm();
+        });
+
+        function removeFile(button) {
+            button.closest('.file-item').remove();
+            validateForm();
+        }
+
+        // Form Validation
+        function validateForm() {
+            const courseName = document.getElementById('courseName').value;
+            const daysToComplete = document.getElementById('daysToComplete').value;
+            const quizzesPerDay = document.getElementById('quizzesPerDay').value;
+            const questionsPerQuiz = document.getElementById('questionsPerQuiz').value;
+            const createButton = document.getElementById('createCourseBtn');
+
+            const isValid = courseName && 
+                           daysToComplete > 0 && daysToComplete <= 365 &&
+                           quizzesPerDay > 0 && quizzesPerDay <= 5 &&
+                           questionsPerQuiz > 0 && questionsPerQuiz <= 50;
+
+            createButton.disabled = !isValid;
+            createButton.style.opacity = isValid ? '1' : '0.5';
+        }
+
+        // Character Counter for Additional Input
+        document.getElementById('additionalInput').addEventListener('input', function(e) {
             const charCount = document.getElementById('charCount');
-            const createCourseBtn = document.getElementById('createCourseBtn');
-            const uploadContainer = document.querySelector('.upload-container');
-            const fileInput = document.getElementById('courseFiles');
-            const uploadedFilesList = document.getElementById('uploadedFilesList');
+            charCount.textContent = e.target.value.length;
+        });
 
-            // Define maximum limits
-            const MAX_DAYS = 365;
-            const MAX_QUIZZES_PER_DAY = 5;
-            const MAX_QUESTIONS_PER_QUIZ = 50;
-
-            // Function to enforce limits on numeric inputs
-            function enforceNumericLimit(input, maxValue) {
-                const value = parseInt(input.value);
-                if (value > maxValue) {
-                    input.value = maxValue;
-                    // Trigger change event to update form validation
-                    input.dispatchEvent(new Event('change'));
-                }
-            }
-
-            // Validate required fields
-            function validateForm() {
-                // Enforce limits on numeric inputs
-                enforceNumericLimit(daysToComplete, MAX_DAYS);
-                enforceNumericLimit(quizzesPerDay, MAX_QUIZZES_PER_DAY);
-                enforceNumericLimit(questionsPerQuiz, MAX_QUESTIONS_PER_QUIZ);
-
-                // Check if all required fields have values
-                const hasValues = courseName.value.trim() !== '' &&
-                                 daysToComplete.value.trim() !== '' &&
-                                 quizzesPerDay.value.trim() !== '' &&
-                                 questionsPerQuiz.value.trim() !== '';
-
-                // Check if numeric values are within valid ranges
-                const daysValue = parseInt(daysToComplete.value);
-                const quizzesValue = parseInt(quizzesPerDay.value);
-                const questionsValue = parseInt(questionsPerQuiz.value);
-
-                const hasValidRanges = daysValue > 0 && daysValue <= MAX_DAYS &&
-                                     quizzesValue > 0 && quizzesValue <= MAX_QUIZZES_PER_DAY &&
-                                     questionsValue > 0 && questionsValue <= MAX_QUESTIONS_PER_QUIZ;
-
-                // Enable button only if all conditions are met
-                createCourseBtn.disabled = !(hasValues && hasValidRanges);
-                return hasValues && hasValidRanges;
-            }
-
-            // Add input event listeners for all required fields
-            [courseName, daysToComplete, quizzesPerDay, questionsPerQuiz].forEach(input => {
-                input.addEventListener('input', validateForm);
-                input.addEventListener('blur', validateForm);
-                input.addEventListener('change', validateForm);
-            });
-
-            // Handle character count for additional input
-            additionalInput.addEventListener('input', function() {
-                if (this.value.length > 500) {
-                    this.value = this.value.substring(0, 500);
-                }
-                charCount.textContent = this.value.length;
-            });
-
-            // Handle file selection
-            fileInput.addEventListener('change', function() {
-                const files = Array.from(this.files);
-                updateFilesList(files);
-            });
-
-            // Handle drag and drop
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadContainer.addEventListener(eventName, preventDefaults, false);
-            });
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadContainer.addEventListener(eventName, highlight, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadContainer.addEventListener(eventName, unhighlight, false);
-            });
-
-            uploadContainer.addEventListener('drop', handleDrop, false);
-            uploadContainer.addEventListener('click', () => fileInput.click());
-
-            // Create course button click handler
-            createCourseBtn.onclick = function(e) {
-                e.preventDefault();
-                
-                if (!validateForm()) {
-                    return;
-                }
-
-                const courseData = {
-                    name: courseName.value.trim(),
-                    daysToComplete: parseInt(daysToComplete.value),
-                    quizzesPerDay: parseInt(quizzesPerDay.value),
-                    questionsPerQuiz: parseInt(questionsPerQuiz.value),
-                    additionalInfo: additionalInput.value.trim(),
-                    progress: 0,
-                    quizzesCompleted: 0,
-                    createdAt: new Date().toISOString()
-                };
-
-                try {
-                    const editingIndex = localStorage.getItem('editingCourseIndex');
-                    const coursesStr = localStorage.getItem('coursesInProgress') || '[]';
-                    const courses = JSON.parse(coursesStr);
-
-                    if (editingIndex !== null && editingIndex !== 'null') {
-                        // We're editing an existing course
-                        const index = parseInt(editingIndex);
-                        if (courses[index]) {
-                            courses[index] = {
-                                ...courses[index],
-                                ...courseData,
-                                progress: courses[index].progress,
-                                quizzesCompleted: courses[index].quizzesCompleted,
-                                createdAt: courses[index].createdAt
-                            };
-                        }
-                        localStorage.removeItem('editingCourseIndex');
-                    } else {
-                        // We're creating a new course
-                        courses.push(courseData);
-                    }
-
-                    localStorage.setItem('coursesInProgress', JSON.stringify(courses));
-                    updateCoursesInProgress();
-                    hideCourseCreationModal();
-                } catch (error) {
-                    console.error('Error handling course data:', error);
-                }
+        // Form Submission
+        document.getElementById('courseCreationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                courseName: document.getElementById('courseName').value,
+                daysToComplete: document.getElementById('daysToComplete').value,
+                quizzesPerDay: document.getElementById('quizzesPerDay').value,
+                questionsPerQuiz: document.getElementById('questionsPerQuiz').value,
+                additionalInput: document.getElementById('additionalInput').value,
+                files: Array.from(document.getElementById('courseFiles').files)
             };
 
-            // Initial validation
-            validateForm();
+            // TODO: Handle form submission with the formData object
+            console.log('Form submitted:', formData);
+            hideCourseCreationModal();
+        });
 
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            function highlight(e) {
-                uploadContainer.classList.add('border-purple-500', 'bg-purple-50');
-            }
-
-            function unhighlight(e) {
-                uploadContainer.classList.remove('border-purple-500', 'bg-purple-50');
-            }
-
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = Array.from(dt.files).filter(file => {
-                    return file.name.match(/\.(txt|pdf|docx)$/i);
-                });
-                
-                if (files.length > 0) {
-                    fileInput.files = dt.files;
-                    updateFilesList(files);
-                }
-                unhighlight(e);
-            }
-
-            function updateFilesList(files) {
-                uploadedFilesList.innerHTML = files.map(file => `
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xs">📄</span>
-                        <span class="text-sm truncate">${file.name}</span>
-                    </div>
-                `).join('');
-            }
-        }
+        // Initialize form validation
+        document.querySelectorAll('#courseCreationForm input').forEach(input => {
+            input.addEventListener('input', validateForm);
+        });
 
         function updateCoursesInProgress() {
-            const coursesContainer = document.getElementById('coursesInProgress');
             const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+            const container = document.getElementById('coursesInProgress');
+            container.innerHTML = '';
 
             if (courses.length === 0) {
-                coursesContainer.innerHTML = `
-                    <div class="text-center py-8 bg-gray-50 rounded-lg">
-                        <p class="text-gray-500">No courses in progress</p>
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📚</div>
+                        <h3 class="empty-state-title">No Courses Yet</h3>
+                        <p class="empty-state-text">Start your learning journey by creating your first course!</p>
+                        <button onclick="showCourseCreationModal()" class="btn-primary">
+                            Create Your First Course
+                        </button>
                     </div>
                 `;
                 return;
             }
 
-            coursesContainer.innerHTML = courses.map((course, index) => {
-                // Initialize quiz completion count if not exists
-                if (!course.quizzesCompleted) {
-                    course.quizzesCompleted = 0;
-                }
-                
-                // Calculate total required quizzes
-                const totalRequiredQuizzes = course.daysToComplete * course.quizzesPerDay;
-                
-                return `
-                    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                        <div class="flex justify-between items-center mb-3">
-                            <h4 class="font-semibold text-gray-900">${course.name}</h4>
-                            <div class="flex items-center gap-2">
-                                <button onclick="startQuiz(${index})" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    Start Quiz
-                                </button>
-                                <button onclick="editCourse(${index})" class="text-gray-500 hover:text-gray-700 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </button>
-                                <button onclick="deleteCourse(${index})" class="text-red-500 hover:text-red-700 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
+            courses.forEach((course, index) => {
+                const progress = Math.round((course.quizzesCompleted / course.totalRequiredQuizzes) * 100);
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <div class="course-header">
+                        <h3 class="course-name">${course.name}</h3>
+                        <div class="course-actions">
+                            <button onclick="startQuiz(${index})" class="start-quiz-btn">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Start Quiz
+                            </button>
+                            <button onclick="editCourse(${index})" class="icon-button">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteCourse(${index})" class="icon-button">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <div class="mb-2">
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${course.progress}%"></div>
-                            </div>
+                    </div>
+                    <div class="course-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
                         </div>
-                        <div class="flex justify-between items-center text-sm text-gray-500">
-                            <span>${course.quizzesCompleted}/${totalRequiredQuizzes} quizzes completed</span>
+                        <div class="course-stats">
+                            <span>${course.quizzesCompleted}/${course.totalRequiredQuizzes} quizzes completed</span>
+                            <span class="separator">•</span>
                             <span>${course.quizzesPerDay} quizzes/day</span>
                         </div>
                     </div>
                 `;
-            }).join('');
+                container.appendChild(card);
+            });
         }
 
         function editCourse(index) {
@@ -1490,7 +2050,6 @@
         }
 
         function showCompletionModal() {
-            const modal = document.getElementById('completionModal');
             const modalContent = document.getElementById('completionModalContent');
             
             // Calculate percentage
@@ -1555,19 +2114,19 @@
 
             // Show completion modal with detailed results
             modalContent.innerHTML = `
-                <div class="text-center">
+                <div class="text-center p-6">
                     <div class="text-6xl mb-4">${percentage >= 70 ? '🎉' : '💪'}</div>
                     <h2 class="text-2xl font-bold mb-4">Quiz Complete!</h2>
-                    <p class="mb-4">You scored ${score} out of ${currentQuiz.length} (${percentage.toFixed(1)}%)</p>
+                    <p class="mb-3 text-gray-600">You scored ${score} out of ${currentQuiz.length} (${percentage.toFixed(1)}%)</p>
                     <div class="mb-6">
-                        <p class="text-sm text-gray-600">${percentage >= 70 ? 'Great job! Keep up the good work!' : 'Keep practicing! You\'ll get better!'}</p>
+                        <p class="text-sm text-gray-500">${percentage >= 70 ? 'Great job! Keep up the good work!' : 'Keep practicing! You\'ll get better!'}</p>
                     </div>
-                    <button onclick="returnToMain()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    <button onclick="hideModal('completionModal')" class="btn-primary px-6 py-2">
                         Back to Courses
                     </button>
                 </div>
             `;
-            modal.style.display = 'block';
+            showModal('completionModal');
         }
 
         async function updateCompletedCourses() {
@@ -1692,6 +2251,182 @@
             const modal = document.getElementById('resultsModal');
             modal.classList.add('hidden');
         }
+
+        // Add to existing JavaScript
+        
+        // Replace alert with native-looking notifications
+        function showNativeAlert(message) {
+            const alert = document.createElement('div');
+            alert.className = 'native-alert';
+            alert.innerHTML = `
+                <div class="text-center">
+                    <p>${message}</p>
+                </div>
+            `;
+            document.body.appendChild(alert);
+            
+            // Trigger haptic feedback if available
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            // Show alert
+            requestAnimationFrame(() => {
+                alert.classList.add('show');
+            });
+
+            // Hide after 2 seconds
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 2000);
+        }
+
+        // Replace all alert() calls with showNativeAlert
+        function showCourseCreationSuccess() {
+            showNativeAlert('Course created successfully!');
+        }
+
+        // Add pull-to-refresh functionality
+        let startY = 0;
+        let pullDistance = 0;
+        const maxPull = 60;
+
+        document.addEventListener('touchstart', (e) => {
+            if (document.scrollTop === 0) {
+                startY = e.touches[0].pageY;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startY > 0) {
+                pullDistance = e.touches[0].pageY - startY;
+                if (pullDistance > 0 && pullDistance < maxPull) {
+                    document.querySelector('.pull-to-refresh').style.height = `${pullDistance}px`;
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (pullDistance >= maxPull) {
+                // Refresh content
+                updateCoursesInProgress();
+                updateCompletedCourses();
+            }
+            startY = 0;
+            pullDistance = 0;
+            document.querySelector('.pull-to-refresh').style.height = '0';
+        });
+
+        // Add haptic feedback to buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.classList.add('haptic-button');
+            button.addEventListener('click', () => {
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            });
+        });
+
+        // Modify modal show/hide functions to use native-like animations
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            // Use requestAnimationFrame to ensure the display: flex is applied before adding the show class
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
+        }
+
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Update existing modal functions to use new show/hide
+        function showCourseCreationModal() {
+            showModal('courseCreationModal');
+            setupCourseCreationForm();
+        }
+
+        function hideCourseCreationModal() {
+            hideModal('courseCreationModal');
+            // ... rest of the existing code ...
+        }
+
+        // Modify form submission to feel more native
+        document.getElementById('courseCreationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            const submitButton = document.getElementById('createCourseBtn');
+            const originalText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                </div>
+            `;
+
+            try {
+                // Create FormData object to handle file uploads
+                const formData = new FormData();
+                formData.append('name', courseNameInput.value.trim());
+                formData.append('daysToComplete', daysToCompleteInput.value);
+                formData.append('quizzesPerDay', quizzesPerDayInput.value);
+                formData.append('questionsPerQuiz', questionsPerQuizInput.value);
+                formData.append('additionalInfo', additionalInput.value.trim());
+                
+                // Append all files
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    formData.append('files', fileInput.files[i]);
+                }
+
+                // Send course data to server
+                const response = await fetch('/api/courses', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create course');
+                }
+
+                const data = await response.json();
+                
+                // Get existing courses and add the new one
+                const courses = JSON.parse(localStorage.getItem('coursesInProgress') || '[]');
+                const newCourse = {
+                    ...data.course,
+                    progress: 0,
+                    quizzesCompleted: 0
+                };
+                courses.push(newCourse);
+                
+                // Save to localStorage and update display
+                localStorage.setItem('coursesInProgress', JSON.stringify(courses));
+
+                // Show success notification with haptic feedback
+                showNativeAlert('Course created successfully!');
+                if (navigator.vibrate) {
+                    navigator.vibrate([50, 50, 50]);
+                }
+
+                // Close modal and update courses display
+                hideModal('courseCreationModal');
+                updateCoursesInProgress();
+            } catch (error) {
+                console.error('Error creating course:', error);
+                showNativeAlert('Failed to create course. Please try again.');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        });
     </script>
 </body>
 </html> 

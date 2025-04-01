@@ -101,7 +101,19 @@ class TestStudyApp(unittest.TestCase):
 
     def test_daily_quiz_limit(self):
         """Test daily quiz limit enforcement"""
-        # Create a test quiz for today
+        # Create a test course
+        course = Course(
+            name='Test Course',
+            content='Test content',
+            days_to_complete=1,
+            quizzes_per_day=1,
+            questions_per_quiz=5,
+            additional_info=''
+        )
+        db.session.add(course)
+        db.session.commit()
+
+        # Create a completed test quiz for today
         quiz = Quiz(
             questions=[{
                 'question': 'Test question',
@@ -109,6 +121,7 @@ class TestStudyApp(unittest.TestCase):
                 'correct_answer': 0
             }],
             course_name='Test Course',
+            completed=True,
             completed_date=datetime.utcnow().date()
         )
         db.session.add(quiz)
@@ -155,18 +168,30 @@ class TestStudyApp(unittest.TestCase):
 
     def test_streak_calculation(self):
         """Test streak calculation logic"""
-        # Create user stats with a quiz from yesterday
+        # Create user stats with a quiz from yesterday and initial streak of 1
         user_stats = UserStats(
-            last_quiz_date=datetime.utcnow() - timedelta(days=1)
+            last_quiz_date=datetime.utcnow() - timedelta(days=1),
+            current_streak=1  # Set initial streak to 1 since we completed a quiz yesterday
         )
         db.session.add(user_stats)
+        db.session.commit()
+
+        # Create a test quiz
+        quiz = Quiz(
+            questions=[{"question": "Test", "options": ["A", "B", "C", "D"], "correct_answer": 0}],
+            course_name='Test Course',
+            completed=False,
+            score=0,
+            completed_date=None
+        )
+        db.session.add(quiz)
         db.session.commit()
 
         # Complete a quiz today
         test_data = {
             'correct_answers': 1,
             'course_name': 'Test Course',
-            'quiz_id': 1,
+            'quiz_id': quiz.id,
             'course_details': {'daysToComplete': 1, 'quizzesPerDay': 1}
         }
 
@@ -177,9 +202,10 @@ class TestStudyApp(unittest.TestCase):
         # Check response
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        
-        # Verify streak increased
-        self.assertEqual(data['current_streak'], 1)
+
+        # Verify streak calculation
+        user_stats = UserStats.query.first()
+        self.assertEqual(user_stats.current_streak, 2)  # Yesterday + today = streak of 2
 
 if __name__ == '__main__':
     unittest.main() 

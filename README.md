@@ -1,4 +1,5 @@
 # StudyStreak - AI-Powered Learning Platform
+By Avanish Shetty and Vlad Zalutsky
 
 StudyStreak is an innovative learning platform that helps students master their subjects through AI-generated quizzes and personalized learning paths. The platform features a gamified learning experience with streaks, levels, and rewards to keep students motivated.
 
